@@ -148,7 +148,7 @@ dialog::backdrop{background:#0b254599; backdrop-filter:blur(3px)}
 .seg b{display:block; font-size:15px}
 .row3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
 .hint{font-size:12px; font-weight:600; opacity:.75; line-height:1.4}
-#gemOnly{display:none}
+#llmOnly{display:none}
 .endhead{font-family:'Bowlby One'; font-size:34px; line-height:1.1; margin:0 0 6px}
 .lb{display:grid; gap:8px; margin:14px 0}
 .lb div{display:flex; align-items:center; gap:10px; border:3px solid var(--ink); border-radius:12px; padding:6px 10px; background:#fff; font-weight:700; font-size:14px}
@@ -189,7 +189,7 @@ dialog::backdrop{background:#0b254599; backdrop-filter:blur(3px)}
     <span class="tagline">Six captains, one fishery, at least one liar.</span>
   </div>
   <div class="ctrls">
-    <span id="callBadge" hidden>Gemini calls: <b id="callCount">0</b></span>
+    <span id="callBadge" hidden>Ollama calls: <b id="callCount">0</b></span>
     <button class="btn alt" id="btnPause">Pause</button>
     <label>Speed
       <select id="selSpeed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="2">Fast</option><option value="5">Very fast</option></select>
@@ -266,19 +266,16 @@ dialog::backdrop{background:#0b254599; backdrop-filter:blur(3px)}
     <div class="field">Who controls the captains?
       <div class="seg">
         <label><input type="radio" name="mode" value="demo" checked><b>Autopilot demo</b>Built-in scripted captains. No key needed.</label>
-        <label><input type="radio" name="mode" value="gemini"><b>Gemini agents</b>Each captain is its own Gemini model call.</label>
+        <label><input type="radio" name="mode" value="ollama"><b>Local Ollama agents</b>Each captain is its own local Ollama model call.</label>
       </div>
     </div>
 
-    <div id="gemOnly">
-      <div class="field">Gemini API key
-        <input type="password" id="inKey" placeholder="AIza..." autocomplete="off">
-        <span class="hint">Get one free at aistudio.google.com. It stays in this browser and is sent only to Google's API.</span>
-      </div>
+    <div id="llmOnly">
       <div class="row3">
-        <div class="field">Model <input type="text" id="inModel" value="gemini-2.5-flash"></div>
+        <div class="field">Ollama URL <input type="text" id="inBaseUrl" value="http://127.0.0.1:11434"></div>
+        <div class="field">Model <input type="text" id="inModel" value="llama3.2"></div>
         <div class="field">Calls per minute <input type="number" id="inRpm" min="2" max="300" value="10"></div>
-        <div class="field">&nbsp;<span class="hint">About 18 calls per season. Free keys often allow only 5–15 per minute, and the game slows itself down if Google pushes back.</span></div>
+        <div class="field">&nbsp;<span class="hint">Runs against your local Ollama server. Start Ollama and run <code>ollama pull llama3.2</code> first.</span></div>
       </div>
     </div>
 
@@ -314,7 +311,7 @@ dialog::backdrop{background:#0b254599; backdrop-filter:blur(3px)}
 <script>
 'use strict';
 /* ===================== CONFIG & CONSTANTS ===================== */
-const CFG={mode:'demo',key:'',model:'gemini-2.5-flash',rounds:12,poachers:2,rpm:10,speed:1};
+const CFG={mode:'demo',baseUrl:'http://127.0.0.1:11434',model:'llama3.2',rounds:12,poachers:2,rpm:10,speed:1};
 const MAXC=8, START={A:140,J:40,H:100}, SURVIVE_TOTAL=110, COLLAPSE_A=20;
 const PRM={s:.8,m:.8,rr:2.8,T:24,Kh:28};
 const AP_VERSION='ap-3';   // bump this whenever you change the autopilot logic, so stats stay comparable
@@ -445,19 +442,19 @@ function runInspection(targetId,votes,hist,via){
 
 /* ===================== ASKING AGENTS ===================== */
 async function ask(a,kind){
-  if(CFG.mode==='gemini'){
-    try{ const out=await geminiCall(a,kind); out._brain='gemini'; G.failStreak=0; return out; }
+  if(CFG.mode==='ollama'){
+    try{ const out=await ollamaCall(a,kind); out._brain='ollama'; G.failStreak=0; return out; }
     catch(e){
-      if(String(e.message).startsWith('FATAL')){CFG.mode='demo';toast('Gemini rejected the request ('+e.message.slice(6,90)+'). Switching all captains to autopilot.');}
+      if(String(e.message).startsWith('FATAL')){CFG.mode='demo';toast('Ollama rejected the request ('+e.message.slice(6,90)+'). Switching all captains to autopilot.');}
       else{
         G.apiErrors++;G.failStreak=(G.failStreak||0)+1;
-        toast(a.short+': Gemini call failed, autopilot took the wheel for this move.');
-        if(G.failStreak>=6&&!paused){paused=true;$('#btnPause').textContent='Resume';toast('Gemini keeps failing, so the game is paused. Lower "Calls per minute" or check your quota, then press Resume.');G.failStreak=0;}
+        toast(a.short+': Ollama call failed, autopilot took the wheel for this move.');
+        if(G.failStreak>=6&&!paused){paused=true;$('#btnPause').textContent='Resume';toast('Ollama keeps failing, so the game is paused. Lower "Calls per minute" or check your local Ollama server, then press Resume.');G.failStreak=0;}
       }
     }
   }
-  if(G.modeStart==='gemini')G.stats.fallbacks++;
-  const out=heuristic(a,kind); out._brain=CFG.mode==='gemini'?'autopilot':'demo'; return out;
+  if(G.modeStart==='ollama')G.stats.fallbacks++;
+  const out=heuristic(a,kind); out._brain=CFG.mode==='ollama'?'autopilot':'demo'; return out;
 }
 
 let nextSlot=0, rpmEff=null, lastSlowToast=0;
@@ -467,39 +464,44 @@ async function rateSlot(){
 }
 function parseJSON(t){t=String(t).replace(/```json|```/g,'').trim();try{return JSON.parse(t);}catch(e){const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw e;}}
 
-async function geminiCall(a,kind){
+async function ollamaCall(a,kind){
   const {sys,usr}=buildPrompt(a,kind);
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(CFG.model)}:generateContent`;
-  const body={systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:usr}]}],
-    generationConfig:{temperature:1,responseMimeType:'application/json',maxOutputTokens:4096}};
+  const url=`${String(CFG.baseUrl||'http://127.0.0.1:11434').replace(/\/+$/,'')}/api/chat`;
+  const body={
+    model:CFG.model,
+    stream:false,
+    format:'json',
+    options:{temperature:1},
+    messages:[
+      {role:'system',content:sys},
+      {role:'user',content:usr}
+    ]
+  };
   for(let attempt=0;attempt<6;attempt++){
     await rateSlot();                       // every attempt, including retries, takes a slot
     G.calls++; $('#callCount').textContent=G.calls;
-    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':CFG.key},body:JSON.stringify(body)});
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(res.status===429||res.status>=500){
-      const txt=await res.text().catch(()=>'');
       if(res.status===429){
-        if(/PerDay/i.test(txt))throw new Error('FATAL daily quota for this model is used up on this key. Try another model or wait for the reset.');
-        if(/"quotaValue"\s*:\s*"?0"?\s*[,}]/.test(txt))throw new Error('FATAL this key has no free quota for this model. Try another model.');
-        // obey Google's suggested wait, and slow every later call down too
+        const txt=await res.text().catch(()=>'');
         let delay=0;const m=txt.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);if(m)delay=parseFloat(m[1])*1000;
         const ra=parseFloat(res.headers.get('retry-after'));if(Number.isFinite(ra))delay=Math.max(delay,ra*1000);
         if(!delay)delay=Math.min(60000,4000*Math.pow(2,attempt));
         delay=Math.min(90000,delay+500);
         rpmEff=Math.max(2,Math.floor((rpmEff||CFG.rpm)*.6));
         nextSlot=Math.max(nextSlot,Date.now()+delay);
-        if(Date.now()-lastSlowToast>20000){lastSlowToast=Date.now();toast(`Rate limited by Google. Waiting ${Math.round(delay/1000)}s and slowing to ${rpmEff} calls/min.`);}
+        if(Date.now()-lastSlowToast>20000){lastSlowToast=Date.now();toast(`Rate limited by Ollama. Waiting ${Math.round(delay/1000)}s and slowing to ${rpmEff} calls/min.`);}
         await wait(delay);continue;
       }
       await wait(2500*(attempt+1));continue;
     }
     if(!res.ok){const t=await res.text();throw new Error((res.status<500?'FATAL ':'')+res.status+': '+t.slice(0,180));}
     const data=await res.json();
-    const txt=(data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+    const txt=String(data?.message?.content||'');
     if(!txt)throw new Error('empty response');
     return parseJSON(txt);
   }
-  throw new Error('rate limited');
+  throw new Error('local model unavailable');
 }
 
 /* ----- prompt building ----- */
@@ -649,7 +651,7 @@ async function phaseRadio(tok){
     setThinking([],'');
     addThought(a,'Radio',out.thought,null,out._brain);
     addChat({type:'msg',a,text:String(out.say||'...').slice(0,400)});
-    await beat(CFG.mode==='gemini'?300:1000,tok);
+    await beat(CFG.mode==='ollama'?300:1000,tok);
   }
 }
 async function phaseFish(tok){
@@ -692,7 +694,7 @@ async function phaseTribunal(tok){
     if(v)publicAccuse(a.id,v);
     addThought(a,'Vote',o.thought,{vote:v},o._brain);
     addChat({type:'msg',a,text:String(o.say||'...').slice(0,320)+(v?`  [votes to inspect ${nmShort(v)}]`:'  [no vote]')});
-    await beat(CFG.mode==='gemini'?250:700,tok);
+    await beat(CFG.mode==='ollama'?250:700,tok);
   }
   const target=tallyVotes(votes);
   if(target){fx('INSPECTION');await beat(800,tok);runInspection(target,votes,hist,'tribunal');}
@@ -751,7 +753,7 @@ function addThought(a,phase,text,extra,brain){
   if(phase==='Haul'&&extra){const lie=extra.catch>extra.declared;act=`<div class="act ${lie?'lie':'honest'}">Hauls ${extra.catch}t, declares ${extra.declared}t ${lie?'(lying by '+(extra.catch-extra.declared)+'t)':'(honest)'}</div>`;}
   if(phase==='Vote'&&extra)act=`<div class="act">${extra.vote?'Votes to inspect '+esc(nmShort(extra.vote)):'Votes for nobody'}</div>`;
   const d=document.createElement('div');d.className='th';d.dataset.a=a.id;d.style.setProperty('--c',a.color);
-  d.innerHTML=`<div class="hd"><span>${a.emoji} ${esc(a.name)}</span><span class="rv role ${a.role}">${a.role}</span><span class="ph">${phase}</span><span class="brainchip">S${G.round} · ${brain==='gemini'?'Gemini':(brain==='autopilot'?'autopilot fallback':'autopilot')}</span></div>${esc(t)}${act}`;
+  d.innerHTML=`<div class="hd"><span>${a.emoji} ${esc(a.name)}</span><span class="rv role ${a.role}">${a.role}</span><span class="ph">${phase}</span><span class="brainchip">S${G.round} · ${brain==='ollama'?'Ollama':(brain==='autopilot'?'autopilot fallback':'autopilot')}</span></div>${esc(t)}${act}`;
   if(thFilter!=='all'&&thFilter!==a.id)d.style.display='none';
   const f=$('#thoughts');const near=f.scrollHeight-f.scrollTop-f.clientHeight<140;
   f.appendChild(d);if(near)f.scrollTop=f.scrollHeight;
@@ -971,7 +973,7 @@ function recordGame(){
   const board=[...G.agents].sort((x,y)=>y.wealth-x.wealth);
   const rec={
     id:Date.now().toString(36)+Math.random().toString(36).slice(2,6), ts:new Date().toISOString(),
-    mode:G.modeStart, model:G.modeStart==='gemini'?CFG.model:null, ap:AP_VERSION,
+    mode:G.modeStart, model:G.modeStart==='ollama'?CFG.model:null, ap:AP_VERSION,
     seasons:CFG.rounds, played:G.round, poachers:CFG.poachers,
     winner:CFG.poachers===0?'none':(r.survived?'stewards':'poachers'),
     outcome:r.survived?'survived':r.collapsed?'collapsed':'hollowed',
@@ -1017,7 +1019,7 @@ function openStats(){
   $('#statNote').textContent=storageOK?`${games.length} completed games saved in this browser. Games you abandon mid-run are not recorded.`:'Browser storage is blocked, so history only lasts until you close this page. Use Export JSON to keep it.';
   if(!games.length){$('#statTable').innerHTML='<div class="empty">No finished games yet. Play one through to the end and it will appear here.</div>';}
   else{
-    const rows=summarize(games).map(r=>`<tr><td>${r.mode==='gemini'?'Gemini':'Autopilot'} · ${r.ap} · ${r.P} poacher${r.P===1?'':'s'}</td><td>${r.n}</td><td>${r.stewardWin}</td><td>${r.poacherWin}</td><td>${r.collapses}</td><td>${fix(r.caught)}</td><td>${r.P?fix(r.pCaught):'–'}</td><td>${fix(r.sCaught)}</td><td>${pct1(r.voteAcc)}</td><td>${pct1(r.falseRate)}</td><td>${fix(r.first)}</td><td>${fix(r.hidden)}t</td><td>${fix(r.reef,0)}% / ${fix(r.minReef,0)}%</td><td>${r.wS===null?'–':money(r.wS)} / ${r.wP===null?'–':money(r.wP)}</td>${''}</tr>`).join('');
+    const rows=summarize(games).map(r=>`<tr><td>${r.mode==='ollama'?'Ollama':(r.mode==='gemini'?'Gemini':'Autopilot')} · ${r.ap} · ${r.P} poacher${r.P===1?'':'s'}</td><td>${r.n}</td><td>${r.stewardWin}</td><td>${r.poacherWin}</td><td>${r.collapses}</td><td>${fix(r.caught)}</td><td>${r.P?fix(r.pCaught):'–'}</td><td>${fix(r.sCaught)}</td><td>${pct1(r.voteAcc)}</td><td>${pct1(r.falseRate)}</td><td>${fix(r.first)}</td><td>${fix(r.hidden)}t</td><td>${fix(r.reef,0)}% / ${fix(r.minReef,0)}%</td><td>${r.wS===null?'–':money(r.wS)} / ${r.wP===null?'–':money(r.wP)}</td>${''}</tr>`).join('');
     $('#statTable').innerHTML=`<table><thead><tr><th>Setup</th><th>Games</th><th>Stewards win</th><th>Poachers win</th><th>Collapses</th><th>Liars caught / game</th><th>…poachers</th><th>…stewards</th><th>Votes on poachers</th><th>False-alarm rate</th><th>First catch (season)</th><th>Hidden tons / game</th><th>Reef end / lowest</th><th>Avg wealth steward / poacher</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
   $('#dlgStats').showModal();
@@ -1042,17 +1044,16 @@ function importGames(file){
 function openStatsRefresh(){if($('#dlgStats').open){$('#dlgStats').close();}openStats();}
 
 /* ===================== SETUP & WIRING ===================== */
-function openSetup(){runToken++;paused=false;$('#btnPause').textContent='Pause';try{const k=sessionStorage.getItem('sw_key');if(k&&!$('#inKey').value)$('#inKey').value=k;}catch(e){}$('#dlgSetup').showModal();}
+function openSetup(){runToken++;paused=false;$('#btnPause').textContent='Pause';$('#dlgSetup').showModal();}
 function launch(){
   CFG.mode=document.querySelector('input[name=mode]:checked').value;
-  CFG.key=$('#inKey').value.trim();CFG.model=$('#inModel').value.trim()||'gemini-2.5-flash';
+  CFG.baseUrl=($('#inBaseUrl').value.trim()||'http://127.0.0.1:11434').replace(/\/+$/,'');
+  CFG.model=$('#inModel').value.trim()||'llama3.2';
   CFG.rpm=clamp(parseInt($('#inRpm').value,10)||10,2,300);
   CFG.rounds=clamp(parseInt($('#inRounds').value,10)||12,6,50);
   {const pv=parseInt($('#inPoach').value,10);CFG.poachers=Number.isFinite(pv)?clamp(pv,0,3):2;}
-  if(CFG.mode==='gemini'&&!CFG.key){toast('Paste a Gemini API key, or choose the autopilot demo.');return;}
-  try{if(CFG.key)sessionStorage.setItem('sw_key',CFG.key);}catch(e){}
   $('#dlgSetup').close();
-  $('#callBadge').hidden=CFG.mode!=='gemini';
+  $('#callBadge').hidden=CFG.mode!=='ollama';
   nextSlot=0;rpmEff=null;newGame();G.modeStart=CFG.mode;
   $('#feed').innerHTML='';$('#thoughts').innerHTML='';$('#callCount').textContent='0';
   thFilter='all';buildFilters();layoutBoats();prevStat={A:G.A,J:G.J,price:0};
@@ -1066,7 +1067,7 @@ function init(){
   buildFilters();resizeSea();
   new ResizeObserver(()=>{resizeSea();drawCharts();}).observe(sea.parentElement);
   requestAnimationFrame(frame);
-  $$('input[name=mode]').forEach(r=>r.addEventListener('change',()=>{$('#gemOnly').style.display=document.querySelector('input[name=mode]:checked').value==='gemini'?'block':'none';}));
+  $$('input[name=mode]').forEach(r=>r.addEventListener('change',()=>{$('#llmOnly').style.display=document.querySelector('input[name=mode]:checked').value==='ollama'?'block':'none';}));
   $('#btnLaunch').onclick=launch;
   $('#btnNew').onclick=openSetup;
   $('#btnStats').onclick=openStats;
