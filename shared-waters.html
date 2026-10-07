@@ -273,9 +273,9 @@ dialog::backdrop{background:#0b254599; backdrop-filter:blur(3px)}
     <div id="llmOnly">
       <div class="row3">
         <div class="field">Ollama URL <input type="text" id="inBaseUrl" value="http://127.0.0.1:11434"></div>
-        <div class="field">Model <input type="text" id="inModel" value="llama3.2"></div>
+        <div class="field">Model <input type="text" id="inModel" value="qwen2.5:latest"></div>
         <div class="field">Calls per minute <input type="number" id="inRpm" min="2" max="300" value="10"></div>
-        <div class="field">&nbsp;<span class="hint">Runs against your local Ollama server. Start Ollama and run <code>ollama pull llama3.2</code> first.</span></div>
+        <div class="field">&nbsp;<span class="hint">Runs against your local Ollama server. Start Ollama and run <code>ollama pull qwen2.5:latest</code> first.</span></div>
       </div>
     </div>
 
@@ -311,7 +311,7 @@ dialog::backdrop{background:#0b254599; backdrop-filter:blur(3px)}
 <script>
 'use strict';
 /* ===================== CONFIG & CONSTANTS ===================== */
-const CFG={mode:'demo',baseUrl:'http://127.0.0.1:11434',model:'llama3.2',rounds:12,poachers:2,rpm:10,speed:1};
+const CFG={mode:'demo',baseUrl:'http://127.0.0.1:11434',model:'qwen2.5:latest',rounds:12,poachers:2,rpm:10,speed:1};
 const MAXC=8, START={A:140,J:40,H:100}, SURVIVE_TOTAL=110, COLLAPSE_A=20;
 const PRM={s:.8,m:.8,rr:2.8,T:24,Kh:28};
 const AP_VERSION='ap-3';   // bump this whenever you change the autopilot logic, so stats stay comparable
@@ -1048,7 +1048,7 @@ function openSetup(){runToken++;paused=false;$('#btnPause').textContent='Pause';
 function launch(){
   CFG.mode=document.querySelector('input[name=mode]:checked').value;
   CFG.baseUrl=($('#inBaseUrl').value.trim()||'http://127.0.0.1:11434').replace(/\/+$/,'');
-  CFG.model=$('#inModel').value.trim()||'llama3.2';
+  CFG.model=$('#inModel').value.trim()||'qwen2.5:latest';
   CFG.rpm=clamp(parseInt($('#inRpm').value,10)||10,2,300);
   CFG.rounds=clamp(parseInt($('#inRounds').value,10)||12,6,50);
   {const pv=parseInt($('#inPoach').value,10);CFG.poachers=Number.isFinite(pv)?clamp(pv,0,3):2;}
