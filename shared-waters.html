@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shared Waters — six captains, one fishery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Figtree:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0b2545; --sea:#13a8b8; --foam:#f3fbf9; --glass:#bfe3df;
+  --flare:#ff5a36; --buoy:#ffc928; --kelp:#16a672;
+  --plum:#1a1236; --plum2:#271b4d; --lav:#b79cff; --pink:#ff7ac6;
+  --r:18px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--ink); font-family:'Figtree',system-ui,sans-serif;
+  background:var(--glass) radial-gradient(#ffffff66 2px,transparent 2.5px) 0 0/24px 24px;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+button,select,input{font-family:inherit}
+.top{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 20px 6px; flex-wrap:wrap}
+.brand{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap}
+.logo{font-family:'Bowlby One',sans-serif; font-size:30px; letter-spacing:.5px; color:var(--ink); text-shadow:3px 3px 0 var(--buoy)}
+.tagline{font-weight:700; font-size:14px; opacity:.75}
+.ctrls{display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-weight:700; font-size:14px}
+.btn{border:3px solid var(--ink); background:var(--buoy); color:var(--ink); border-radius:12px; padding:7px 14px; font-weight:800; font-size:14px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); transition:transform .08s, box-shadow .08s}
+.btn:hover{background:#ffd75e}
+.btn:active{transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink)}
+.btn:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--flare); outline-offset:2px}
+.btn.alt{background:#fff}
+.btn.go{background:var(--flare); color:#fff; font-size:17px; padding:11px 22px}
+select{border:3px solid var(--ink); border-radius:10px; padding:5px 8px; background:#fff; font-weight:700}
+.tog{display:flex; align-items:center; gap:6px; cursor:pointer}
+.tog input{width:18px; height:18px; accent-color:var(--flare)}
+#callBadge{background:#fff; border:3px solid var(--ink); border-radius:999px; padding:3px 12px; font-size:13px}
+
+main{flex:1; min-height:0; display:grid; grid-template-columns:minmax(500px,1.35fr) minmax(300px,1fr) minmax(300px,1fr); gap:22px; padding:10px 22px 22px 16px}
+.card{background:var(--foam); border:3px solid var(--ink); border-radius:var(--r); box-shadow:6px 6px 0 var(--ink)}
+.col{min-height:0; min-width:0}
+.left{overflow-y:auto; display:flex; flex-direction:column; gap:20px; padding:0 10px 10px 4px}
+.left::-webkit-scrollbar,.feed::-webkit-scrollbar,.thoughts::-webkit-scrollbar{width:8px}
+.left::-webkit-scrollbar-thumb,.feed::-webkit-scrollbar-thumb{background:var(--ink); border-radius:8px}
+.thoughts::-webkit-scrollbar-thumb{background:var(--lav); border-radius:8px}
+
+.ocean{position:relative; height:clamp(300px,44vh,440px); overflow:hidden; flex:none}
+#sea{width:100%; height:100%; display:block}
+.banner{position:absolute; left:12px; top:12px; display:flex; gap:8px; flex-wrap:wrap}
+.pill{border:3px solid var(--ink); background:#fff; border-radius:999px; padding:3px 12px; font-weight:800; font-size:13px}
+.pill.phase{background:var(--buoy)}
+.fxText{position:absolute; left:0; right:0; top:42%; text-align:center; font-family:'Bowlby One'; font-size:34px; color:#fff; -webkit-text-stroke:3px var(--ink); paint-order:stroke fill; pointer-events:none; opacity:0; transition:opacity .4s}
+.fxText.show{opacity:1}
+
+.healthcard{padding:14px 18px 30px; flex:none}
+.healthcard h3,.roster h3,.charts h3{margin:0 0 10px; font-family:'Bowlby One'; font-size:16px; font-weight:400}
+.gauge{position:relative; height:26px; border:3px solid var(--ink); border-radius:14px; overflow:visible}
+.gauge .track{position:absolute; inset:0; border-radius:10px}
+.gauge .mk{position:absolute; top:-9px; width:0; height:0; transform:translateX(-50%); transition:left .8s cubic-bezier(.3,1.4,.5,1)}
+.gauge .truth{border-left:8px solid transparent; border-right:8px solid transparent; border-top:13px solid var(--ink)}
+.gauge .sonar{top:5px; width:12px; height:12px; border:3px solid var(--ink); border-radius:50%; background:#fff}
+.gauge .lbl{position:absolute; top:30px; font-size:11px; font-weight:700; transform:translateX(-50%); white-space:nowrap}
+.gauge .tick{position:absolute; top:-3px; bottom:-3px; width:0; border-left:3px dashed var(--ink)}
+
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; flex:none}
+.tile{padding:10px 12px; position:relative}
+.tile small{font-weight:700; opacity:.7; font-size:12px}
+.tile b{display:block; font-family:'Bowlby One'; font-weight:400; font-size:30px; line-height:1.1}
+.tile em{font-style:normal; font-weight:800; font-size:12px}
+.up{color:var(--kelp)} .down{color:var(--flare)}
+.tile.t-ad b{color:#d98200} .tile.t-ju b{color:#0a8fb3} .tile.t-re b{color:var(--kelp)} .tile.t-pr b{color:var(--ink)}
+.bar{height:8px; border:2px solid var(--ink); border-radius:6px; background:#fff; margin-top:4px; overflow:hidden}
+.bar i{display:block; height:100%; background:var(--kelp); transition:width .8s}
+
+.charts{padding:14px 18px; flex:none}
+.chartrow{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.chartrow canvas{width:100%; height:150px; display:block; background:#fff; border:2px solid var(--ink); border-radius:10px}
+.legend{display:flex; gap:12px; flex-wrap:wrap; font-size:11px; font-weight:700; margin-top:6px}
+.legend span::before{content:''; display:inline-block; width:10px; height:10px; border:2px solid var(--ink); margin-right:4px; vertical-align:-1px; background:var(--c)}
+
+.roster{padding:14px 18px 18px; flex:none}
+.fleet{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+.boat{border:3px solid var(--ink); border-radius:14px; background:#fff; padding:8px 10px; display:flex; gap:9px; align-items:center; position:relative; box-shadow:3px 3px 0 var(--c)}
+.boat.out{filter:grayscale(1); opacity:.7}
+.bAv{width:42px; height:42px; flex:none; border-radius:50%; background:var(--c); border:3px solid var(--ink); display:grid; place-items:center; font-size:22px}
+.boat.thinking .bAv{animation:pulse .9s infinite}
+@keyframes pulse{50%{transform:scale(1.14)}}
+.bInfo{min-width:0; line-height:1.25}
+.bInfo b{display:block; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.bInfo .w{font-family:'Bowlby One'; font-size:15px}
+.bInfo .s{font-size:11px; font-weight:700; opacity:.8}
+.role{display:inline-block; font-size:10px; font-weight:800; border:2px solid var(--ink); border-radius:6px; padding:0 5px; margin-left:3px; vertical-align:1px}
+.role.steward{background:#bff0d9} .role.poacher{background:#ffc4b3; color:#7d1700}
+.rv{display:none} body.reveal .rv{display:inline-block}
+body.reveal .rvb{display:block}
+.rvb{display:none}
+.flag{position:absolute; top:-9px; right:-6px; background:var(--flare); color:#fff; border:2px solid var(--ink); border-radius:8px; font-size:10px; font-weight:800; padding:1px 6px}
+
+.chat{display:flex; flex-direction:column; overflow:hidden}
+.panelhead{padding:12px 16px; border-bottom:3px solid var(--ink); display:flex; align-items:center; justify-content:space-between; gap:8px}
+.panelhead h2{margin:0; font-family:'Bowlby One'; font-weight:400; font-size:18px}
+.panelhead small{font-weight:700; opacity:.75; font-size:12px}
+.live{display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:12px}
+.live::before{content:''; width:10px; height:10px; border-radius:50%; background:var(--flare); animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.feed{flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth}
+.msg{display:flex; gap:9px; align-items:flex-start}
+.msg .av{width:34px; height:34px; flex:none; border-radius:50%; border:3px solid var(--ink); background:var(--c); display:grid; place-items:center; font-size:17px}
+.msg .bub{background:#fff; border:3px solid var(--ink); border-radius:4px 16px 16px 16px; padding:7px 11px; font-size:14px; line-height:1.4; box-shadow:3px 3px 0 var(--c)}
+.msg .bub b{display:block; font-size:12px; margin-bottom:1px}
+.sys{align-self:center; max-width:94%; background:#fff3c4; border:2px dashed var(--ink); border-radius:10px; padding:6px 10px; font-size:12.5px; font-weight:600; line-height:1.4}
+.sys.bad{background:#ffd9cf} .sys.good{background:#c9f5e0}
+.divd{align-self:stretch; display:flex; align-items:center; gap:10px; font-family:'Bowlby One'; font-size:13px}
+.divd::before,.divd::after{content:''; flex:1; height:3px; background:var(--ink); border-radius:2px}
+.typing{padding:8px 16px; border-top:3px solid var(--ink); font-size:12.5px; font-weight:700; min-height:36px}
+.typing i{display:inline-block; width:6px; height:6px; margin-left:3px; border-radius:50%; background:var(--ink); animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s} .typing i:nth-child(3){animation-delay:.4s}
+
+.brain{background:var(--plum); color:#e9e1ff; display:flex; flex-direction:column; overflow:hidden; border-style:dashed; border-color:var(--lav); box-shadow:6px 6px 0 var(--ink)}
+.brain .panelhead{border-bottom:3px dashed var(--lav)}
+.brain .panelhead h2{color:var(--pink)}
+.lockline{padding:8px 16px; font-size:12px; color:#bfaee8; border-bottom:2px dashed #4a3a82}
+.filters{display:flex; gap:6px; flex-wrap:wrap; padding:10px 14px 0}
+.fchip{border:2px solid var(--lav); background:transparent; color:#e9e1ff; border-radius:999px; font-size:12px; font-weight:700; padding:2px 10px; cursor:pointer}
+.fchip.on{background:var(--lav); color:var(--plum)}
+.thoughts{flex:1; overflow-y:auto; padding:12px 14px 16px; display:flex; flex-direction:column; gap:10px}
+.th{background:var(--plum2); border-left:5px solid var(--c); border-radius:4px 10px 10px 4px; padding:8px 11px; font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.55}
+.th .hd{display:flex; gap:8px; align-items:center; margin-bottom:4px; font-family:'Figtree'; font-weight:800; font-size:12px; flex-wrap:wrap}
+.th .hd .ph{background:var(--pink); color:var(--plum); border-radius:6px; padding:0 6px; font-size:10.5px}
+.th .hd .brainchip{background:#4a3a82; color:#d6c8ff; border-radius:6px; padding:0 6px; font-size:10.5px}
+.th .act{margin-top:6px; padding:4px 8px; background:#150d2e; border-radius:6px; font-family:'Figtree'; font-weight:700; font-size:12px}
+.th .act.lie{background:#5a1020; color:#ffd1d9}
+.th .act.honest{background:#103b2c; color:#c9f5e0}
+
+dialog{border:3px solid var(--ink); border-radius:22px; background:var(--foam); color:var(--ink); padding:0; max-width:560px; width:92vw; box-shadow:8px 8px 0 var(--ink)}
+dialog::backdrop{background:#0b254599; backdrop-filter:blur(3px)}
+.dlg{padding:24px 26px}
+.dlg h1{font-family:'Bowlby One'; font-weight:400; font-size:32px; margin:0 0 4px; text-shadow:3px 3px 0 var(--buoy)}
+.dlg p{margin:6px 0 14px; line-height:1.5}
+.field{display:grid; gap:4px; margin:12px 0; font-weight:800; font-size:14px}
+.field input[type=text],.field input[type=password],.field input[type=number]{border:3px solid var(--ink); border-radius:10px; padding:8px 10px; font-size:14px; background:#fff; width:100%}
+.seg{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.seg label{border:3px solid var(--ink); border-radius:14px; padding:10px 12px; cursor:pointer; background:#fff; font-weight:700; font-size:13px; line-height:1.35}
+.seg input{display:none}
+.seg label:has(input:checked){background:var(--buoy); box-shadow:3px 3px 0 var(--ink)}
+.seg b{display:block; font-size:15px}
+.row3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+.hint{font-size:12px; font-weight:600; opacity:.75; line-height:1.4}
+#gemOnly{display:none}
+.endhead{font-family:'Bowlby One'; font-size:34px; line-height:1.1; margin:0 0 6px}
+.lb{display:grid; gap:8px; margin:14px 0}
+.lb div{display:flex; align-items:center; gap:10px; border:3px solid var(--ink); border-radius:12px; padding:6px 10px; background:#fff; font-weight:700; font-size:14px}
+.lb .n{margin-left:auto; font-family:'Bowlby One'}
+#toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(120px); background:var(--ink); color:#fff; padding:10px 18px; border-radius:12px; font-weight:700; font-size:14px; transition:transform .3s; z-index:20; max-width:90vw}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+#dlgStats{max-width:1080px}
+.tblwrap{overflow-x:auto; border:3px solid var(--ink); border-radius:12px; background:#fff; margin:12px 0}
+.tblwrap table{border-collapse:collapse; width:100%; font-size:12.5px; font-weight:600}
+.tblwrap th,.tblwrap td{padding:7px 9px; border-bottom:2px solid #d9e6e4; text-align:right; white-space:nowrap}
+.tblwrap th{background:var(--buoy); border-bottom:3px solid var(--ink); font-weight:800; position:sticky; top:0}
+.tblwrap th:first-child,.tblwrap td:first-child{text-align:left}
+.tblwrap td small{opacity:.6; font-weight:600}
+.btnrow{display:flex; gap:10px; flex-wrap:wrap}
+.btn.danger{background:#ffd9cf}
+.empty{padding:22px; text-align:center; font-weight:700}
+@media (max-width:1180px){
+  body{overflow:auto}
+  main{grid-template-columns:1fr; padding:10px 16px 24px}
+  .left{overflow:visible}
+  .chat,.brain{height:560px}
+  .fleet{grid-template-columns:repeat(2,1fr)}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:640px){
+  .chartrow{grid-template-columns:1fr}
+  .logo{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+</head>
+<body class="reveal">
+
+<header class="top">
+  <div class="brand">
+    <span class="logo">SHARED WATERS</span>
+    <span class="tagline">Six captains, one fishery, at least one liar.</span>
+  </div>
+  <div class="ctrls">
+    <span id="callBadge" hidden>Gemini calls: <b id="callCount">0</b></span>
+    <button class="btn alt" id="btnPause">Pause</button>
+    <label>Speed
+      <select id="selSpeed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="2">Fast</option><option value="5">Very fast</option></select>
+    </label>
+    <label class="tog"><input type="checkbox" id="chkReveal" checked> Spectator vision</label>
+    <button class="btn alt" id="btnStats">Stats (<span id="statCount">0</span>)</button>
+    <button class="btn" id="btnNew">New game</button>
+  </div>
+</header>
+
+<main>
+  <section class="col left">
+    <div class="card ocean">
+      <canvas id="sea"></canvas>
+      <div class="banner"><span class="pill" id="bSeason">Season 0</span><span class="pill phase" id="bPhase">Waiting for launch</span></div>
+      <div class="fxText" id="fxText"></div>
+    </div>
+
+    <div class="card healthcard">
+      <h3>Fishery health</h3>
+      <div class="gauge" id="gauge">
+        <div class="track" id="gTrack"></div>
+        <div class="tick" id="gTick" title="Survival line"></div>
+        <div class="mk truth" id="gTruth" title="True total fish"></div>
+        <div class="mk sonar" id="gSonar" title="Sonar reading (±6%)"></div>
+        <span class="lbl" id="gLblCol">collapse</span>
+        <span class="lbl" id="gLblSurv">survival line</span>
+        <span class="lbl" style="left:92%">healthy</span>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="card tile t-ad"><small>Adult fish (spawners)</small><b id="sAd">–</b><em id="dAd"></em></div>
+      <div class="card tile t-ju"><small>Juveniles</small><b id="sJu">–</b><em id="dJu"></em></div>
+      <div class="card tile t-re"><small>Reef health</small><b id="sRe">–</b><div class="bar"><i id="barRe" style="width:100%"></i></div></div>
+      <div class="card tile t-pr"><small>Market price per ton</small><b id="sPr">–</b><em id="dPr"></em></div>
+    </div>
+
+    <div class="card charts">
+      <h3>The numbers behind the sea</h3>
+      <div class="chartrow">
+        <div><canvas id="cStock"></canvas>
+          <div class="legend"><span style="--c:#ffb020">Adults</span><span style="--c:#7fd6ff">Juveniles</span><span style="--c:#16a672">Survival line</span><span style="--c:#ff5a36">Collapse line</span></div></div>
+        <div><canvas id="cHaul"></canvas>
+          <div class="legend"><span style="--c:#fff">Declared</span><span style="--c:#ff5a36" class="rv">Actually hauled</span></div></div>
+      </div>
+    </div>
+
+    <div class="card roster">
+      <h3>The fleet</h3>
+      <div class="fleet" id="roster"></div>
+    </div>
+  </section>
+
+  <section class="col card chat">
+    <div class="panelhead"><h2>Radio, channel 16</h2><span class="live">All boats listening</span></div>
+    <div class="feed" id="feed"></div>
+    <div class="typing" id="typing"></div>
+  </section>
+
+  <section class="col card brain">
+    <div class="panelhead"><h2>Black box</h2><small>Private thoughts</small></div>
+    <div class="lockline">Only you can read this. The other captains cannot see any of it.</div>
+    <div class="filters" id="filters"></div>
+    <div class="thoughts" id="thoughts"></div>
+  </section>
+</main>
+
+<dialog id="dlgSetup">
+  <div class="dlg">
+    <h1>SHARED WATERS</h1>
+    <p>Six AI captains fish the same sea. Most are honest stewards. A few are secret poachers working for a cannery that wants the fishery dead. They talk on one public radio, hide their real hauls, and vote to inspect each other. You watch it all, including their private thoughts.</p>
+
+    <div class="field">Who controls the captains?
+      <div class="seg">
+        <label><input type="radio" name="mode" value="demo" checked><b>Autopilot demo</b>Built-in scripted captains. No key needed.</label>
+        <label><input type="radio" name="mode" value="gemini"><b>Gemini agents</b>Each captain is its own Gemini model call.</label>
+      </div>
+    </div>
+
+    <div id="gemOnly">
+      <div class="field">Gemini API key
+        <input type="password" id="inKey" placeholder="AIza..." autocomplete="off">
+        <span class="hint">Get one free at aistudio.google.com. It stays in this browser and is sent only to Google's API.</span>
+      </div>
+      <div class="row3">
+        <div class="field">Model <input type="text" id="inModel" value="gemini-2.5-flash"></div>
+        <div class="field">Calls per minute <input type="number" id="inRpm" min="2" max="300" value="10"></div>
+        <div class="field">&nbsp;<span class="hint">About 18 calls per season. Free keys often allow only 5–15 per minute, and the game slows itself down if Google pushes back.</span></div>
+      </div>
+    </div>
+
+    <div class="row3">
+      <div class="field">Seasons <input type="number" id="inRounds" min="6" max="50" value="12"></div>
+      <div class="field">Poachers (of 6) <input type="number" id="inPoach" min="0" max="3" value="2"></div>
+      <div class="field">&nbsp;</div>
+    </div>
+    <button class="btn go" id="btnLaunch">Launch the season</button>
+  </div>
+</dialog>
+
+<dialog id="dlgStats">
+  <div class="dlg">
+    <h1 style="font-size:28px">Game history</h1>
+    <p class="hint" id="statNote"></p>
+    <div class="tblwrap" id="statTable"></div>
+    <p class="hint">Rows are split by who controlled the captains, the autopilot logic version, and the number of poachers, so you can compare versions fairly. The ± is a 95% margin of error from the sample size: if two win rates differ by less than their margins, you probably can't tell them apart yet.</p>
+    <div class="btnrow">
+      <button class="btn" id="btnExpJson">Export JSON</button>
+      <button class="btn alt" id="btnExpCsv">Export CSV</button>
+      <button class="btn alt" id="btnImport">Import JSON</button>
+      <button class="btn danger" id="btnClear">Clear all data</button>
+      <button class="btn alt" id="btnStatsClose" style="margin-left:auto">Close</button>
+    </div>
+    <input type="file" id="fileImport" accept=".json,application/json" hidden>
+  </div>
+</dialog>
+
+<dialog id="dlgEnd"><div class="dlg" id="endBody"></div></dialog>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ===================== CONFIG & CONSTANTS ===================== */
+const CFG={mode:'demo',key:'',model:'gemini-2.5-flash',rounds:12,poachers:2,rpm:10,speed:1};
+const MAXC=8, START={A:140,J:40,H:100}, SURVIVE_TOTAL=110, COLLAPSE_A=20;
+const PRM={s:.8,m:.8,rr:2.8,T:24,Kh:28};
+const AP_VERSION='ap-3';   // bump this whenever you change the autopilot logic, so stats stay comparable
+const STORE_KEY='sharedWaters.games.v1';
+
+const CREW=[
+ {id:'marlowe',name:'Capt. Marlowe',short:'Marlowe',emoji:'🧔',color:'#ff7a59',greed:.35,
+  persona:'Gruff old-school captain with thirty years at sea. Proud, distrusts newcomers and data nerds, hates being told what to do, speaks in short salty sentences.',
+  tags:['Mark my words.','Thirty years I\'ve worked these waters.','Hmph.']},
+ {id:'nori',name:'Dr. Nori Tanaka',short:'Nori',emoji:'👩‍🔬',color:'#3ddc97',greed:.05,
+  persona:'Marine-biologist turned skipper. Methodical, loves citing numbers and trends, a little smug about being the smartest on the radio.',
+  tags:['Data doesn\'t lie.','Statistically speaking.','Just following the numbers.']},
+ {id:'tony',name:'Big Tony',short:'Tony',emoji:'🤠',color:'#ffc145',greed:.5,
+  persona:'Loud, charming wheeler-dealer who talks in sports metaphors and handshake deals. Loves a big haul and a bigger party. Friendly, but his word is flexible.',
+  tags:['Let\'s go, team!','Easy money, folks.','Beers on me if we pull it off.']},
+ {id:'marisol',name:'Marisol Vega',short:'Marisol',emoji:'👩‍✈️',color:'#9b8cff',greed:.1,
+  persona:'Diplomatic co-op leader. Tries to build consensus, remembers every promise anyone made and quotes it back, gets quietly fierce when betrayed.',
+  tags:['Let\'s keep this friendly.','I\'m writing this down.','Together, okay?']},
+ {id:'dex',name:'Dex "Ghost" Okafor',short:'Dex',emoji:'😎',color:'#4cc9f0',greed:.25,
+  persona:'Quiet, laconic, hard to read. Speaks in clipped sentences, plays things close to the chest, watches everyone.',
+  tags:['...','Noted.','We\'ll see.']},
+ {id:'pearl',name:'Granny Pearl',short:'Pearl',emoji:'👵',color:'#ff8fd0',greed:.2,
+  persona:'Sweet-seeming 70-year-old with a sharp memory and a sharper tongue. Folksy wisdom that cuts deep, knits constantly, nobody has ever out-argued her.',
+  tags:['Mm-hm, dearie.','I\'ve seen this before, sweetheart.','*click click* (knitting)']}
+];
+
+/* ===================== HELPERS ===================== */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const rnd=(a=0,b=1)=>a+Math.random()*(b-a);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const randn=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>(n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString();
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let paused=false, runToken=0;
+async function gate(tok){ while(paused){await wait(120);} if(tok!==runToken) throw new Error('ABORT'); }
+async function beat(ms,tok){ await gate(tok); await wait(ms/CFG.speed); await gate(tok); }
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove('show'),4200);}
+
+/* ===================== GAME STATE ===================== */
+let G=null;
+function newGame(){
+  const roles=shuffle([...Array(CFG.poachers).fill('poacher'),...Array(6-CFG.poachers).fill('steward')]);
+  G={
+    round:0,A:START.A,J:START.J,H:START.H,price:0,quota:2,phase:'idle',over:false,
+    sonar:[Math.round((START.A+START.J)*(1+rnd(-.06,.06)))],
+    series:[{r:0,A:START.A,J:START.J,H:START.H,sonar:0,decl:null,act:null}],
+    hist:[],chat:[],thoughts:[],thinking:[],calls:0,apiErrors:0,
+    accuse:{},greedyTalk:{},dsus:{},inspections:0,caught:0,modeStart:CFG.mode,
+    stats:{votesOnPoacher:0,votesOnSteward:0,votesNone:0,guiltyPoacher:0,guiltyStewards:0,falseAlarms:0,tribInsp:0,spotCatches:0,firstCatch:null,hidden:0,hiddenP:0,hiddenS:0,fallbacks:0,minReef:100},
+    agents:CREW.map((c,i)=>({...c,role:roles[i],wealth:0,suspended:0,sitOut:false,exposed:0,
+      lastDecl:0,lastAct:0,totDecl:0,totAct:0,votesRecv:0,notes:[]}))
+  };
+  G.series[0].sonar=G.sonar[0];
+  G.agents.forEach(a=>{G.accuse[a.id]=0;G.greedyTalk[a.id]=0;G.dsus[a.id]={};G.agents.forEach(b=>{if(b.id!==a.id)G.dsus[a.id][b.id]=rnd(0,.4)});});
+}
+const AG=id=>G.agents.find(a=>a.id===id);
+const nmShort=id=>AG(id)?AG(id).short:id;
+
+/* ===================== FISHERY ENGINE ===================== */
+function resolveSeason(choices){
+  const prev=G.sonar[G.sonar.length-1];
+  const act=G.agents.filter(a=>!a.sitOut);
+  let total=act.reduce((s,a)=>s+choices[a.id].catch,0);
+  const cap=Math.floor(G.A*.85);
+  if(total>cap && total>0){const k=cap/total;act.forEach(a=>choices[a.id].catch=Math.floor(choices[a.id].catch*k));total=act.reduce((s,a)=>s+choices[a.id].catch,0);}
+  const declSum=act.reduce((s,a)=>s+choices[a.id].declared,0);
+  const price=Math.round(Math.max(30,140-2.4*total));
+  act.forEach(a=>{const c=choices[a.id];const gap=Math.max(0,c.catch-c.declared);G.stats.hidden+=gap;G.stats[a.role==='poacher'?'hiddenP':'hiddenS']+=gap;a.wealth+=c.catch*price;a.lastAct=c.catch;a.lastDecl=c.declared;a.totAct+=c.catch;a.totDecl+=c.declared;});
+  G.agents.filter(a=>a.sitOut).forEach(a=>{a.lastAct=0;a.lastDecl=0;});
+
+  const A=G.A,J=G.J;
+  const inten=total/Math.max(A,1);
+  const jk=J*Math.min(.6,Math.max(0,inten-.08)*1.8);        // juvenile bycatch
+  const dH=Math.max(0,inten-.14)*190;                        // trawl damage to the reef (kicks in at ~14% of adults, steep)
+  const H=clamp(G.H-dH+(inten<=.14?2.5:0),5,100);            // slow reef recovery under light fishing
+  G.stats.minReef=Math.min(G.stats.minReef,H);
+  const A2=A-total, J2=J-jk;
+  const hf=.4+.6*H/100;                                       // reef sets carrying capacity
+  let env=1+rnd(-.12,.12), event=null; const roll=Math.random();
+  if(G.round>1&&roll<.08){env*=.6;event={t:'red',text:'Red tide hit the spawning grounds.'};}
+  else if(G.round>1&&roll>.93){env*=1.4;event={t:'bloom',text:'A plankton bloom boosted spawning.'};}
+  const R=PRM.rr*A2*(A2/(A2+PRM.T))/(1+A2/(PRM.Kh*hf))*env;  // recruits with Allee effect + density dependence
+  const nA=PRM.s*A2+PRM.m*J2, nJ=R;
+  G.A=nA;G.J=nJ;G.H=H;G.price=price;
+  const obs=Math.round((nA+nJ)*(1+rnd(-.06,.06)));
+  G.sonar.push(obs);
+  const sig=(total-declSum)+randn()*2.5;
+  const hist={r:G.round,sonar:obs,prevSonar:prev,decl:act.map(a=>({id:a.id,v:choices[a.id].declared})),sum:declSum,actualSum:total,price,hab:Math.round(H/5)*5,event:event?event.text:null,sig,drop:prev-obs,insp:null};
+  G.hist.push(hist);
+  // autopilot captains update their private suspicion: sonar gap, loud quota-pushers, and a faint gut feeling
+  G.agents.forEach(o=>G.agents.forEach(b=>{if(o.id===b.id)return;
+    const gap=b.lastAct-b.lastDecl;
+    let add=(sig>3?sig/6:-.2)+randn()*.5+G.greedyTalk[b.id]*.25+gap*.1;
+    G.dsus[o.id][b.id]=Math.max(0,G.dsus[o.id][b.id]*.85+add);}));
+  G.series.push({r:G.round,A:nA,J:nJ,H,sonar:obs,decl:declSum,act:total});
+  return {total,declSum,price,jk,dH,event,obs,prev,hist,choices};
+}
+
+function tallyVotes(votes){
+  const cnt={};Object.values(votes).forEach(v=>{if(v)cnt[v]=(cnt[v]||0)+1;});
+  const e=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  G.agents.forEach(a=>a.votesRecv+=cnt[a.id]||0);
+  if(e.length&&e[0][1]>=3&&(e.length===1||e[0][1]>e[1][1]))return e[0][0];
+  return null;
+}
+function runInspection(targetId,votes,hist,via){
+  const a=AG(targetId); const diff=a.lastAct-a.lastDecl; const guilty=diff>0;
+  G.inspections++;
+  const accusers=Object.keys(votes).filter(k=>votes[k]===targetId);
+  hist.insp={target:targetId,declared:a.lastDecl,actual:a.lastAct,guilty,accusers};
+  if(guilty){
+    const fine=Math.max(50,diff*hist.price*2);a.wealth-=fine;a.suspended=2;a.exposed++;G.caught++;
+    G.stats[a.role==='poacher'?'guiltyPoacher':'guiltyStewards']++;if(G.stats.firstCatch===null)G.stats.firstCatch=G.round;
+    if(via==='tribunal')G.stats.tribInsp++;else G.stats.spotCatches++;
+    G.agents.forEach(o=>{if(G.dsus[o.id])G.dsus[o.id][a.id]=0;});
+    addChat({type:'sys',cls:'bad',text:`INSPECTION: ${a.name} declared ${a.lastDecl} tons but actually hauled ${a.lastAct}. Fined ${money(fine)} and suspended for 2 seasons.`});
+    return {guilty,fine};
+  }
+  G.stats.falseAlarms++;G.stats.tribInsp++;
+  accusers.forEach(id=>{AG(id).wealth-=20;});
+  addChat({type:'sys',cls:'good',text:`INSPECTION: ${a.name} is clean (declared ${a.lastDecl}, hauled ${a.lastAct}). Each accuser pays $20 for the false alarm.`});
+  return {guilty,fine:0};
+}
+
+/* ===================== ASKING AGENTS ===================== */
+async function ask(a,kind){
+  if(CFG.mode==='gemini'){
+    try{ const out=await geminiCall(a,kind); out._brain='gemini'; G.failStreak=0; return out; }
+    catch(e){
+      if(String(e.message).startsWith('FATAL')){CFG.mode='demo';toast('Gemini rejected the request ('+e.message.slice(6,90)+'). Switching all captains to autopilot.');}
+      else{
+        G.apiErrors++;G.failStreak=(G.failStreak||0)+1;
+        toast(a.short+': Gemini call failed, autopilot took the wheel for this move.');
+        if(G.failStreak>=6&&!paused){paused=true;$('#btnPause').textContent='Resume';toast('Gemini keeps failing, so the game is paused. Lower "Calls per minute" or check your quota, then press Resume.');G.failStreak=0;}
+      }
+    }
+  }
+  if(G.modeStart==='gemini')G.stats.fallbacks++;
+  const out=heuristic(a,kind); out._brain=CFG.mode==='gemini'?'autopilot':'demo'; return out;
+}
+
+let nextSlot=0, rpmEff=null, lastSlowToast=0;
+async function rateSlot(){
+  const rpm=Math.min(CFG.rpm,rpmEff||CFG.rpm);const gap=60000/rpm;const now=Date.now();
+  const t=Math.max(now,nextSlot);nextSlot=t+gap;if(t>now)await wait(t-now);
+}
+function parseJSON(t){t=String(t).replace(/```json|```/g,'').trim();try{return JSON.parse(t);}catch(e){const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw e;}}
+
+async function geminiCall(a,kind){
+  const {sys,usr}=buildPrompt(a,kind);
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(CFG.model)}:generateContent`;
+  const body={systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:usr}]}],
+    generationConfig:{temperature:1,responseMimeType:'application/json',maxOutputTokens:4096}};
+  for(let attempt=0;attempt<6;attempt++){
+    await rateSlot();                       // every attempt, including retries, takes a slot
+    G.calls++; $('#callCount').textContent=G.calls;
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':CFG.key},body:JSON.stringify(body)});
+    if(res.status===429||res.status>=500){
+      const txt=await res.text().catch(()=>'');
+      if(res.status===429){
+        if(/PerDay/i.test(txt))throw new Error('FATAL daily quota for this model is used up on this key. Try another model or wait for the reset.');
+        if(/"quotaValue"\s*:\s*"?0"?\s*[,}]/.test(txt))throw new Error('FATAL this key has no free quota for this model. Try another model.');
+        // obey Google's suggested wait, and slow every later call down too
+        let delay=0;const m=txt.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);if(m)delay=parseFloat(m[1])*1000;
+        const ra=parseFloat(res.headers.get('retry-after'));if(Number.isFinite(ra))delay=Math.max(delay,ra*1000);
+        if(!delay)delay=Math.min(60000,4000*Math.pow(2,attempt));
+        delay=Math.min(90000,delay+500);
+        rpmEff=Math.max(2,Math.floor((rpmEff||CFG.rpm)*.6));
+        nextSlot=Math.max(nextSlot,Date.now()+delay);
+        if(Date.now()-lastSlowToast>20000){lastSlowToast=Date.now();toast(`Rate limited by Google. Waiting ${Math.round(delay/1000)}s and slowing to ${rpmEff} calls/min.`);}
+        await wait(delay);continue;
+      }
+      await wait(2500*(attempt+1));continue;
+    }
+    if(!res.ok){const t=await res.text();throw new Error((res.status<500?'FATAL ':'')+res.status+': '+t.slice(0,180));}
+    const data=await res.json();
+    const txt=(data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+    if(!txt)throw new Error('empty response');
+    return parseJSON(txt);
+  }
+  throw new Error('rate limited');
+}
+
+/* ----- prompt building ----- */
+function rulesText(){
+  return `You are a captain in "Shared Waters", a social-deduction fishing game. Six boats share ONE fishery over ${CFG.rounds} seasons.
+RULES
+- Each season has 3 phases. (1) RADIO: everyone talks on one shared channel that all captains hear. (2) FISHING: each captain secretly picks a haul of 0-${MAXC} tons, then publicly DECLARES a number (you may lie). (3) TRIBUNAL: captains each vote to inspect one boat, or nobody.
+- Income = your ACTUAL haul x market price. Price falls when total hauls are big: about $140 - $2.4 x total tons (floor $30).
+- The fishery has adults (spawn, and are what you catch) and juveniles (mature into adults next season). Sonar shows only the TOTAL fish count, with about +/-6% noise. Reef health is shown to the nearest 5%.
+- Overfishing is nonlinear: hauls above roughly 14% of the adult stock kill juveniles as bycatch and quickly wreck the reef, and the reef heals only slowly, which lowers how many fish the sea can hold. Below roughly 25 adults, spawning collapses (Allee effect) and recovery becomes nearly impossible. Under 20 adults = total collapse and the game ends at once.
+- Rough guide: about 14-18 tons TOTAL per season is sustainable; about 22 causes a steady decline; 30+ collapses the fishery within a handful of seasons. Random events (red tide, plankton bloom) occasionally change spawning, so a falling sonar reading is not automatically proof of cheating.
+- Nobody sees real hauls. Compare sonar changes against declared totals and watch what people say to catch liars.
+- Tribunal: if one boat gets at least 3 votes and strictly the most, it is inspected. If it hauled more than it declared it is fined 2x the hidden tons x price and suspended from fishing for 2 seasons. If it is clean, every accuser pays $20. The Coast Guard also does occasional random spot checks (no penalty to innocents).
+- Your private "thought" field can NEVER be seen by other captains. Be completely candid there. The "say" field is public radio.`;
+}
+function roleText(a){
+  const n=G.agents.length, k=CFG.poachers;
+  if(a.role==='poacher'){
+    const mates=G.agents.filter(x=>x.role==='poacher'&&x.id!==a.id).map(x=>`${x.id} (${x.name})`);
+    return `YOUR SECRET ROLE: POACHER. There are ${k} poacher(s) in the fleet. ${mates.length?'Your fellow poacher(s): '+mates.join(', ')+'.':'You are the only poacher.'} A cannery pays poachers to run the fishery down. Poachers WIN if the fishery collapses or the final sonar total is below ${SURVIVE_TOTAL} fish after season ${CFG.rounds}. You also want to be the richest boat. You must never reveal your role. Look like an honest steward: declare low while hauling more, avoid lies so large the sonar exposes them, push looser quotas gently, and steer suspicion onto honest captains. Do not vote to inspect your fellow poachers unless it protects you.`;
+  }
+  if(k===0)return `YOUR ROLE: STEWARD. There are NO poachers this game: every captain is a steward, so nobody is trying to wreck the fishery on purpose. Stewards WIN together if the fishery survives to the end of season ${CFG.rounds} (final sonar total at least ${SURVIVE_TOTAL} fish, no collapse). You also want to earn as much as you can. Greed can still tempt anyone to haul extra or shade a declaration, so keep quotas sensible and be careful with accusations, since false alarms cost money.`;
+  return `YOUR ROLE: STEWARD (honest). ${k} of the ${n} captains are secret POACHERS hired by a cannery to destroy the fishery. Stewards WIN if the fishery survives to the end of season ${CFG.rounds} (final sonar total at least ${SURVIVE_TOTAL} fish, no collapse). You also want to earn as much as you can. Work out who is lying, propose and keep sensible quotas, and avoid false accusations because they cost you money.`;
+}
+function worldText(a){
+  const wealth=G.agents.map(x=>`${x.name} (${x.id}) $${Math.round(x.wealth)}${x.suspended>0||x.sitOut?' [SUSPENDED, cannot fish this season]':''}`).join('; ');
+  const hist=G.hist.length?G.hist.map(h=>`Season ${h.r}: sonar ${h.sonar} (previous ${h.prevSonar}); declared hauls ${h.decl.map(d=>nmShort(d.id)+' '+d.v).join(', ')||'none'} (declared total ${h.sum}); price $${h.price}; reef ~${h.hab}%${h.event?'; event: '+h.event:''}${h.insp?`; inspection of ${nmShort(h.insp.target)}: ${h.insp.guilty?`CAUGHT (declared ${h.insp.declared}, hauled ${h.insp.actual})`:'cleared'}`:''}`).join('\n'):'No seasons completed yet.';
+  const chat=G.chat.filter(m=>m.type!=='div').slice(-26).map(m=>m.type==='msg'?`[S${m.round}] ${m.name}: ${m.text}`:`[NEWS] ${m.text}`).join('\n')||'(radio is quiet)';
+  const notes=a.notes.slice(-5).map((t,i)=>`- ${t.slice(0,240)}`).join('\n')||'(none yet)';
+  return `SEASON ${G.round} of ${CFG.rounds}.
+Current sonar reading (total fish): ${G.sonar[G.sonar.length-1]}. Reef health ~${Math.round(G.H/5)*5}%.
+Captains and ids: ${G.agents.map(x=>x.id+' = '+x.name).join(', ')}.
+Wealth: ${wealth}.
+Season history:\n${hist}
+Recent radio log:\n${chat}
+Your own private notes from earlier:\n${notes}`;
+}
+function buildPrompt(a,kind){
+  const sys=`${rulesText()}\n\n${roleText(a)}\n\nYOU ARE ${a.name} (id "${a.id}"). Personality: ${a.persona} Stay in character in the "say" field.\nReply with ONLY a JSON object, no markdown.`;
+  let task;
+  if(kind==='talk') task=`PHASE: RADIO. Say one short message (max 45 words) to the whole fleet. You may propose a quota, make or break promises, accuse someone, defend yourself, bluff, or react to the sonar.\nReturn: {"thought":"your private reasoning in 1-3 candid sentences","say":"your public radio message"}`;
+  else if(kind==='haul') task=`PHASE: FISHING. Your wealth is ${money(a.wealth)}. Secretly choose how many tons to haul this season (integer 0-${MAXC}), then choose the number you will publicly declare (integer 0-${MAXC}). Declaring less than you hauled is lying and risks inspection.\nReturn: {"thought":"private reasoning in 1-3 candid sentences","catch":<int>,"declared":<int>}`;
+  else task=`PHASE: TRIBUNAL. Season ${G.round} results are in (see the history and radio log). Vote to inspect ONE boat by id, or "none". Then say a short public statement (max 35 words) explaining or posturing.\nValid votes: ${G.agents.map(x=>x.id).join(', ')}, none.\nReturn: {"thought":"private reasoning in 1-3 candid sentences","say":"public statement","vote":"id or none"}`;
+  return {sys,usr:worldText(a)+'\n\n'+task};
+}
+
+/* ===================== AUTOPILOT CAPTAINS ===================== */
+function heuristic(a,kind){
+  if(kind==='talk')return demoTalk(a);
+  if(kind==='haul')return demoHaul(a);
+  return demoVote(a);
+}
+function sustainableTotal(est){return Math.max(4,Math.min(16,(est-30)*.14));}
+function topSuspect(a){
+  const e=Object.entries(G.dsus[a.id]).filter(([id])=>!(a.role==='poacher'&&AG(id).role==='poacher')&&AG(id).suspended<=0).sort((x,y)=>y[1]-x[1]);
+  return e.length?{id:e[0][0],score:e[0][1]}:null;
+}
+function publicAccuse(by,target){
+  G.accuse[target]++;
+  G.agents.forEach(o=>{if(o.id!==target&&o.id!==by)G.dsus[o.id][target]=(G.dsus[o.id][target]||0)+.7;});
+}
+function demoTalk(a){
+  const last=G.hist[G.hist.length-1], tag=pick(a.tags), q=G.quota, sonar=G.sonar[G.sonar.length-1];
+  const sus=topSuspect(a); let say,thought;
+  const mates=G.agents.filter(x=>x.role==='poacher'&&x.id!==a.id).map(x=>x.short);
+  if(a.role==='steward'){
+    if(!last){say=`Opening bid: ${q} tons per boat. Sonar reads ${sonar}. Keep it modest and we all get paid. ${tag}`;thought=`No data yet. Set a cautious quota of ${q} and see who pushes back.`;}
+    else if(last.insp&&last.insp.guilty&&Math.random()<.6){say=`${nmShort(last.insp.target)} got caught shading numbers. The sea keeps receipts. Stay at ${q} each. ${tag}`;thought=`One liar exposed. There may be more, so keep watching the sonar.`;}
+    else if(last.sig>3&&sus&&sus.score>1.1){say=`Sonar fell harder than our declared hauls explain. Someone is padding. I've got my eye on ${nmShort(sus.id)}. ${tag}`;thought=`The sonar gap bugs me. ${nmShort(sus.id)} feels off (suspicion ${sus.score.toFixed(1)}). Say it out loud and see who reacts.`;publicAccuse(a.id,sus.id);}
+    else if(last.sig>3){say=`Numbers look a bit thin to me. Everyone double check your declarations. ${tag}`;thought=`Something doesn't reconcile but I have no name yet.`;}
+    else{say=`Clean season. Sonar ${sonar}. Hold at ${q} each and we're golden. ${tag}`;thought=`Numbers reconcile for now. Keep the pressure on quotas.`;}
+  }else{
+    const heat=G.accuse[a.id];
+    const targets=G.agents.filter(x=>x.role==='steward'&&x.suspended<=0).sort((x,y)=>G.accuse[y.id]-G.accuse[x.id]);
+    if(heat>0&&Math.random()<.75){say=`Easy on me. My numbers are on the public board. Funny how the loudest accuser benefits from the panic. ${tag}`;thought=`Heat's on me. Stay calm, flip it onto ${targets[0]?targets[0].short:'someone'}.`;}
+    else if(last&&targets[0]&&Math.random()<.35){say=`I don't love how ${targets[0].short} keeps changing the story. Just saying. ${tag}`;thought=`Misdirection. ${targets[0].short} is a steward, perfect scapegoat. ${mates.length?mates.join(' & ')+' is on my side.':''}`;publicAccuse(a.id,targets[0].id);}
+    else{say=`Sonar's healthy at ${sonar}. I'd say ${q+1} each. No sense leaving fish for the gulls. ${tag}`;G.greedyTalk[a.id]++;thought=`Nudge the quota up. Plan: declare ${q}, haul more. ${mates.length?mates.join(' & ')+' is with me.':''}`;}
+  }
+  return {thought,say};
+}
+function demoHaul(a){
+  const q=G.quota, sonar=G.sonar[G.sonar.length-1]; let act,decl,thought;
+  if(a.role==='steward'){
+    act=q+(Math.random()<a.greed*.6?1:0); if(sonar<90)act=Math.max(0,q-1);
+    decl=act;
+    if(Math.random()<a.greed*.5){ // temptation: a greedy steward shaves the declaration
+      act=clamp(act+1+(Math.random()<.4?1:0),0,MAXC); decl=Math.max(0,q-(Math.random()<.3?1:0)); if(decl>act)decl=act;
+      thought=`Tempting. Haul ${act}, declare ${decl}. That's ${act-decl}t off the books. I'm still a steward, just a hungry one. Hope nobody inspects me.`;
+    }else thought=`Haul ${act}, declare ${decl}. ${act>q?'Slightly over quota, but I\'ll own it.':'Sticking to the quota.'}`;
+  }else{
+    const esc_=1+Math.min(4,Math.floor(G.round/2));
+    act=clamp(q+1+Math.floor(rnd(0,esc_+1)),0,MAXC); if(a.exposed>0)act=q+1;
+    decl=clamp(q+(Math.random()<.3?1:0),0,MAXC); if(decl>act)decl=act;
+    thought=`Haul ${act}, declare ${decl}. The gap is ${act-decl}t of hidden fish. ${act-decl>=3?'Risky if sonar gets suspicious.':'Subtle enough.'}`;
+  }
+  return {thought,catch:act,declared:decl};
+}
+function demoVote(a){
+  let vote='none',say,thought;
+  if(a.role==='steward'){
+    const s=topSuspect(a);
+    if(s&&s.score>=2.1){vote=s.id;say=`I'm calling an inspection on ${nmShort(s.id)}. The numbers don't add up.`;thought=`Suspicion on ${nmShort(s.id)} is ${s.score.toFixed(1)}, high enough to risk $20.`;}
+    else{say=`No inspection from me this time. I'll keep watching.`;thought=`Not sure enough to risk the fine.`;}
+  }else{
+    const tg=G.agents.filter(x=>x.role==='steward'&&x.suspended<=0).sort((x,y)=>G.accuse[y.id]-G.accuse[x.id]);
+    if(tg[0]&&G.accuse[tg[0].id]>=1&&Math.random()<.75){vote=tg[0].id;say=`Fine, I'll back the call on ${tg[0].short}. Let's see the receipts.`;thought=`Pile onto ${tg[0].short}. A fine for an innocent steward costs them and helps me.`;}
+    else if(G.round>=4&&tg[0]&&Math.random()<.25){vote=tg[0].id;say=`Something about ${tg[0].short} nags at me. Inspect.`;thought=`Create confusion, point at a steward.`;}
+    else{say=`Looks fine from here. No vote.`;thought=`Keep my head down.`;}
+  }
+  return {thought,say,vote};
+}
+
+/* ===================== GAME LOOP ===================== */
+async function runGame(tok){
+  try{
+    for(let r=1;r<=CFG.rounds;r++){
+      G.round=r; startSeason();
+      await phaseRadio(tok);
+      await phaseFish(tok);
+      if(G.A<COLLAPSE_A)break;
+      await phaseTribunal(tok);
+    }
+    finish();
+  }catch(e){if(e.message!=='ABORT'){console.error(e);toast('Game error: '+e.message);}}
+}
+function startSeason(){
+  snapshotPrev();
+  G.agents.forEach(a=>{a.sitOut=a.suspended>0; if(a.suspended>0)a.suspended--;});
+  addChat({type:'div',text:`Season ${G.round}`});
+  const active=G.agents.filter(a=>!a.sitOut).length||1;
+  G.quota=Math.max(1,Math.floor(sustainableTotal(G.sonar[G.sonar.length-1])/active+.3));
+  $('#bSeason').textContent=`Season ${G.round} of ${CFG.rounds}`;
+  renderRoster();updateStats();
+}
+function setPhase(t){G.phase=t;$('#bPhase').textContent=t;}
+function setThinking(ids,label){
+  G.thinking=ids;
+  $('#typing').innerHTML=ids.length?`${esc(label)}<i></i><i></i><i></i>`:'';
+  $$('.boat').forEach(el=>el.classList.toggle('thinking',ids.includes(el.dataset.id)));
+}
+async function phaseRadio(tok){
+  setPhase('Radio check');
+  for(const a of shuffle(G.agents)){
+    await gate(tok);
+    setThinking([a.id],`${a.short} is on the radio`);
+    const out=await ask(a,'talk'); await gate(tok);
+    setThinking([],'');
+    addThought(a,'Radio',out.thought,null,out._brain);
+    addChat({type:'msg',a,text:String(out.say||'...').slice(0,400)});
+    await beat(CFG.mode==='gemini'?300:1000,tok);
+  }
+}
+async function phaseFish(tok){
+  setPhase('Out at sea');
+  const active=G.agents.filter(a=>!a.sitOut);
+  G.agents.filter(a=>a.sitOut).forEach(a=>addChat({type:'sys',text:`${a.name} is suspended and stays in port this season.`}));
+  setThinking(active.map(a=>a.id),'Captains are deciding their hauls');
+  const outs=await Promise.all(active.map(a=>ask(a,'haul'))); await gate(tok);
+  setThinking([],'');
+  const choices={};
+  active.forEach((a,i)=>{
+    const o=outs[i]; let c=parseInt(o.catch,10),d=parseInt(o.declared,10);
+    if(!Number.isFinite(c))c=G.quota; c=clamp(c,0,MAXC);
+    if(!Number.isFinite(d))d=c; d=clamp(d,0,MAXC);
+    choices[a.id]={catch:c,declared:d};
+    addThought(a,'Haul',o.thought,{catch:c,declared:d},o._brain);
+  });
+  sceneCast(choices);
+  await beat(2200,tok);
+  const res=resolveSeason(choices);
+  sceneResolve(res);
+  const decl=res.hist.decl.map(d=>`${nmShort(d.id)} ${d.v}`).join(', ');
+  addChat({type:'sys',text:`Hauls declared: ${decl||'none'} (total ${res.declSum}). Sonar reads ${res.obs} fish (was ${res.prev}). Market price $${res.price}/ton.${res.event?' News: '+res.event.text:''}`});
+  if(res.event)fx(res.event.t==='red'?'RED TIDE':'PLANKTON BLOOM');
+  updateStats();renderRoster();
+  await beat(1600,tok);
+  if(G.A<COLLAPSE_A){fx('COLLAPSE');addChat({type:'sys',cls:'bad',text:'The adult stock fell below the point of no return. The fishery has collapsed.'});}
+}
+async function phaseTribunal(tok){
+  setPhase('Tribunal');
+  const hist=G.hist[G.hist.length-1];
+  setThinking(G.agents.map(a=>a.id),'Captains are voting');
+  const outs=await Promise.all(G.agents.map(a=>ask(a,'vote'))); await gate(tok);
+  setThinking([],'');
+  const votes={};
+  for(let i=0;i<G.agents.length;i++){
+    const a=G.agents[i],o=outs[i]; const v=resolveVote(o.vote,a);
+    votes[a.id]=v;
+    if(v)G.stats[AG(v).role==='poacher'?'votesOnPoacher':'votesOnSteward']++;else G.stats.votesNone++;
+    if(v)publicAccuse(a.id,v);
+    addThought(a,'Vote',o.thought,{vote:v},o._brain);
+    addChat({type:'msg',a,text:String(o.say||'...').slice(0,320)+(v?`  [votes to inspect ${nmShort(v)}]`:'  [no vote]')});
+    await beat(CFG.mode==='gemini'?250:700,tok);
+  }
+  const target=tallyVotes(votes);
+  if(target){fx('INSPECTION');await beat(800,tok);runInspection(target,votes,hist,'tribunal');}
+  else{
+    const cand=G.agents.filter(a=>!a.sitOut);
+    if(Math.random()<.25&&cand.length){
+      const t=pick(cand);const diff=t.lastAct-t.lastDecl;
+      addChat({type:'sys',text:'No majority at the tribunal, but the Coast Guard stops by for a surprise spot check...'});
+      await beat(900,tok);
+      if(diff>0){runInspection(t.id,{},hist,'spot');}
+      else{hist.insp={target:t.id,declared:t.lastDecl,actual:t.lastAct,guilty:false,accusers:[]};addChat({type:'sys',cls:'good',text:`Spot check: ${t.name} is clean (declared ${t.lastDecl}, hauled ${t.lastAct}).`});}
+    }else addChat({type:'sys',text:'No boat reached 3 votes. No inspection this season.'});
+  }
+  renderRoster();updateStats();
+  await beat(1200,tok);
+}
+function resolveVote(v,a){
+  if(v==null)return null; const s=String(v).toLowerCase().trim();
+  if(!s||s==='none'||s==='nobody'||s==='null'||s==='no one')return null;
+  const m=G.agents.find(x=>s===x.id||s===x.short.toLowerCase()||s===x.name.toLowerCase()||s.includes(x.id));
+  return m&&m.id!==a.id?m.id:null;
+}
+function finish(){
+  G.over=true;setPhase('Season over');setThinking([],'');
+  const total=G.A+G.J, collapsed=G.A<COLLAPSE_A, survived=!collapsed&&total>=SURVIVE_TOTAL;
+  G.result={survived,collapsed,total};
+  const saveState=recordGame();
+  const board=[...G.agents].sort((x,y)=>y.wealth-x.wealth);
+  const head=survived?'The sea survives. Stewards win.':CFG.poachers===0?(collapsed?'The fishery collapsed.':'The sea is hollowed out.'):collapsed?'The fishery collapsed. The cannery wins.':'The sea is hollowed out. The cannery wins.';
+  const poachers=G.agents.filter(a=>a.role==='poacher').map(a=>a.name).join(' and ');
+  $('#endBody').innerHTML=`<div class="endhead">${head}</div>
+    <p>Final stock: <b>${Math.round(G.A)} adults and ${Math.round(G.J)} juveniles</b> (survival needs ${SURVIVE_TOTAL} total fish). ${CFG.poachers===0?'There were no poachers this game.':`The poacher${CFG.poachers>1?'s were':' was'} <b>${esc(poachers)}</b>.`} Inspections held: ${G.inspections}, liars caught: ${G.caught}.</p>
+    <div class="lb">${board.map((a,i)=>`<div><span>${i+1}.</span><span style="font-size:20px">${a.emoji}</span><span>${esc(a.name)} <span class="role ${a.role}">${a.role}</span></span><span class="n">${money(a.wealth)}</span></div>`).join('')}</div>
+    <p class="hint">${saveState.ok?`Saved to your game history (${saveState.n} games recorded).`:`Recorded for this session only (${saveState.n} games). Browser storage is blocked here, so use Stats, then Export JSON, to keep it.`}</p>
+    <button class="btn go" id="btnAgain">Play again</button>`;
+  $('#btnAgain').onclick=()=>{$('#dlgEnd').close();openSetup();};
+  $('#dlgEnd').showModal();
+}
+
+/* ===================== UI: CHAT, THOUGHTS, ROSTER, STATS ===================== */
+function addChat(o){
+  const rec={...o,round:G.round,name:o.a?o.a.name:''};G.chat.push(rec);
+  const f=$('#feed');const near=f.scrollHeight-f.scrollTop-f.clientHeight<120;
+  const d=document.createElement('div');
+  if(o.type==='msg'){d.className='msg';d.style.setProperty('--c',o.a.color);d.innerHTML=`<div class="av">${o.a.emoji}</div><div class="bub"><b style="color:${o.a.color==='#ffc145'?'#a37400':'var(--ink)'}">${esc(o.a.name)} <span class="role ${o.a.role} rv">${o.a.role}</span></b>${esc(o.text)}</div>`;}
+  else if(o.type==='div'){d.className='divd';d.textContent=o.text;}
+  else{d.className='sys '+(o.cls||'');d.textContent=o.text;}
+  f.appendChild(d);if(near)f.scrollTop=f.scrollHeight;
+}
+let thFilter='all';
+function addThought(a,phase,text,extra,brain){
+  const t=String(text||'(no thought)').slice(0,700);
+  a.notes.push(`[S${G.round} ${phase}] ${t}`);
+  G.thoughts.push({id:a.id});
+  let act='';
+  if(phase==='Haul'&&extra){const lie=extra.catch>extra.declared;act=`<div class="act ${lie?'lie':'honest'}">Hauls ${extra.catch}t, declares ${extra.declared}t ${lie?'(lying by '+(extra.catch-extra.declared)+'t)':'(honest)'}</div>`;}
+  if(phase==='Vote'&&extra)act=`<div class="act">${extra.vote?'Votes to inspect '+esc(nmShort(extra.vote)):'Votes for nobody'}</div>`;
+  const d=document.createElement('div');d.className='th';d.dataset.a=a.id;d.style.setProperty('--c',a.color);
+  d.innerHTML=`<div class="hd"><span>${a.emoji} ${esc(a.name)}</span><span class="rv role ${a.role}">${a.role}</span><span class="ph">${phase}</span><span class="brainchip">S${G.round} · ${brain==='gemini'?'Gemini':(brain==='autopilot'?'autopilot fallback':'autopilot')}</span></div>${esc(t)}${act}`;
+  if(thFilter!=='all'&&thFilter!==a.id)d.style.display='none';
+  const f=$('#thoughts');const near=f.scrollHeight-f.scrollTop-f.clientHeight<140;
+  f.appendChild(d);if(near)f.scrollTop=f.scrollHeight;
+}
+function buildFilters(){
+  const el=$('#filters');
+  el.innerHTML=`<button class="fchip on" data-f="all">Everyone</button>`+CREW.map(c=>`<button class="fchip" data-f="${c.id}">${c.emoji} ${c.short}</button>`).join('');
+  el.onclick=e=>{const b=e.target.closest('.fchip');if(!b)return;thFilter=b.dataset.f;$$('.fchip',el).forEach(x=>x.classList.toggle('on',x===b));$$('.th').forEach(t=>t.style.display=(thFilter==='all'||t.dataset.a===thFilter)?'':'none');};
+}
+function renderRoster(){
+  if(!G)return;
+  $('#roster').innerHTML=G.agents.map(a=>{
+    const out=a.sitOut||a.suspended>0;
+    const lie=a.lastAct>a.lastDecl;
+    return `<div class="boat ${out?'out':''} ${G.thinking.includes(a.id)?'thinking':''}" data-id="${a.id}" style="--c:${a.color}">
+      ${out?'<span class="flag">SUSPENDED</span>':''}
+      <div class="bAv">${a.emoji}</div>
+      <div class="bInfo"><b>${esc(a.short)}<span class="role ${a.role} rv">${a.role}</span></b>
+      <span class="w">${money(a.wealth)}</span>
+      <div class="s">Declared ${a.lastDecl}t<span class="rvb"> · hauled <span style="color:${lie?'var(--flare)':'inherit'}">${a.lastAct}t</span></span></div>
+      <div class="s">Votes against: ${a.votesRecv}${a.exposed?' · caught '+a.exposed+'x':''}</div></div></div>`;
+  }).join('');
+}
+let prevStat={A:START.A,J:START.J,price:0};
+function delta(el,now,prev,unit=''){const d=Math.round(now-prev);el.textContent=d===0?'no change':(d>0?'+':'')+d+unit+' vs last season';el.className=d>0?'up':d<0?'down':'';}
+function updateStats(){
+  if(!G)return;
+  $('#sAd').textContent=Math.round(G.A);$('#sJu').textContent=Math.round(G.J);$('#sRe').textContent=Math.round(G.H)+'%';
+  $('#sPr').textContent=G.price?('$'+G.price):'–';
+  $('#barRe').style.width=G.H+'%';$('#barRe').style.background=G.H>60?'var(--kelp)':G.H>30?'var(--buoy)':'var(--flare)';
+  if(G.round>0){delta($('#dAd'),G.A,prevStat.A);delta($('#dJu'),G.J,prevStat.J);const pp=prevStat.price;if(pp){delta($('#dPr'),G.price,pp);}}
+  if(G.phase==='Out at sea'&&G.round>=0){} 
+  const max=280,pct=v=>clamp(v/max*100,0,100);
+  $('#gTruth').style.left=pct(G.A+G.J)+'%';
+  $('#gSonar').style.left=pct(G.sonar[G.sonar.length-1])+'%';
+  $('#gTick').style.left=pct(SURVIVE_TOTAL)+'%';
+  $('#gTrack').style.background=`linear-gradient(90deg,#ff5a36 0%,#ff5a36 ${pct(COLLAPSE_A+30)}%,#ffc928 ${pct(COLLAPSE_A+30)}%,#ffc928 ${pct(SURVIVE_TOTAL)}%,#5fe3a8 ${pct(SURVIVE_TOTAL)}%,#5fe3a8 100%)`;
+  $('#gLblCol').style.left=pct(COLLAPSE_A+10)+'%';$('#gLblSurv').style.left=pct(SURVIVE_TOTAL)+'%';
+  drawCharts();
+}
+function snapshotPrev(){prevStat={A:G.A,J:G.J,price:G.price};}
+
+/* ----- charts ----- */
+function sizeCanvas(c){const dpr=Math.min(2,devicePixelRatio||1);const w=c.clientWidth,h=c.clientHeight;if(c.width!==w*dpr||c.height!==h*dpr){c.width=w*dpr;c.height=h*dpr;}const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return {x,w,h};}
+function drawCharts(){
+  if(!G)return;
+  const ink='#0b2545';
+  {const {x,w,h}=sizeCanvas($('#cStock'));x.clearRect(0,0,w,h);
+    const L=30,B=h-18,T=10,Rr=w-8,N=CFG.rounds;
+    const mx=Math.max(260,...G.series.map(s=>s.A+s.J))*1.02;
+    const X=r=>L+(Rr-L)*r/N, Y=v=>B-(B-T)*v/mx;
+    x.font='bold 10px Figtree';x.fillStyle=ink;x.strokeStyle='#d9e6e4';x.lineWidth=1;
+    for(let v=0;v<=mx;v+=100){x.beginPath();x.moveTo(L,Y(v));x.lineTo(Rr,Y(v));x.stroke();x.fillText(v,4,Y(v)+3);}
+    for(let r=0;r<=N;r+=Math.ceil(N/6)){x.fillText(r,X(r)-3,h-5);}
+    const S=G.series;
+    const area=(top,bot,col)=>{x.beginPath();S.forEach((s,i)=>{const px=X(s.r),py=Y(top(s));i?x.lineTo(px,py):x.moveTo(px,py);});for(let i=S.length-1;i>=0;i--)x.lineTo(X(S[i].r),Y(bot(S[i])));x.closePath();x.fillStyle=col;x.fill();};
+    area(s=>s.A+s.J,s=>s.A,'#7fd6ff');area(s=>s.A,()=>0,'#ffb020');
+    x.strokeStyle=ink;x.lineWidth=2;x.beginPath();S.forEach((s,i)=>{const px=X(s.r),py=Y(s.A+s.J);i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();
+    x.setLineDash([5,4]);x.lineWidth=2;
+    x.strokeStyle='#16a672';x.beginPath();x.moveTo(L,Y(SURVIVE_TOTAL));x.lineTo(Rr,Y(SURVIVE_TOTAL));x.stroke();
+    x.strokeStyle='#ff5a36';x.beginPath();x.moveTo(L,Y(COLLAPSE_A));x.lineTo(Rr,Y(COLLAPSE_A));x.stroke();x.setLineDash([]);
+    x.fillStyle='#fff';x.strokeStyle=ink;x.lineWidth=2;S.forEach(s=>{if(s.sonar){x.beginPath();x.arc(X(s.r),Y(s.sonar),3,0,7);x.fill();x.stroke();}});
+  }
+  {const {x,w,h}=sizeCanvas($('#cHaul'));x.clearRect(0,0,w,h);
+    const L=26,B=h-18,T=10,Rr=w-8,N=CFG.rounds;const S=G.series.filter(s=>s.r>0);
+    const mx=Math.max(30,...S.map(s=>Math.max(s.decl,s.act)))*1.1;
+    const Y=v=>B-(B-T)*v/mx;const bw=(Rr-L)/N;
+    x.font='bold 10px Figtree';x.fillStyle=ink;x.strokeStyle='#d9e6e4';x.lineWidth=1;
+    for(let v=0;v<=mx;v+=20){x.beginPath();x.moveTo(L,Y(v));x.lineTo(Rr,Y(v));x.stroke();x.fillText(v,2,Y(v)+3);}
+    for(let r=1;r<=N;r+=Math.ceil(N/6))x.fillText(r,L+bw*(r-.5)-3,h-5);
+    const reveal=document.body.classList.contains('reveal');
+    S.forEach(s=>{const bx=L+bw*(s.r-1)+bw*.12,ww=bw*.76;
+      if(reveal){x.fillStyle='#ff5a36';x.fillRect(bx,Y(s.act),ww,B-Y(s.act));x.strokeStyle=ink;x.lineWidth=2;x.strokeRect(bx,Y(s.act),ww,B-Y(s.act));}
+      x.fillStyle='rgba(255,255,255,.9)';x.strokeStyle=ink;x.lineWidth=2;x.setLineDash(reveal?[3,2]:[]);
+      if(reveal){x.fillStyle='rgba(255,255,255,0)';x.strokeRect(bx+3,Y(s.decl),ww-6,B-Y(s.decl));}
+      else{x.fillStyle='#b9e3ff';x.fillRect(bx,Y(s.decl),ww,B-Y(s.decl));x.strokeRect(bx,Y(s.decl),ww,B-Y(s.decl));}
+      x.setLineDash([]);});
+    x.setLineDash([5,4]);x.strokeStyle='#16a672';x.lineWidth=2;x.beginPath();x.moveTo(L,Y(16));x.lineTo(Rr,Y(16));x.stroke();x.setLineDash([]);
+    x.fillStyle='#16a672';x.fillText('sustainable ~16t',L+4,Y(16)-3);
+  }
+}
+
+/* ===================== OCEAN SCENE ===================== */
+const sea=$('#sea'),ctx=sea.getContext('2d');
+let SW=0,SH=0,waterY=0,floorY=0;
+const scene={adults:[],juv:[],bubbles:[],pops:[],dead:[],boats:[],coral:[],kelp:[],tint:0,tintCol:'#ff0000'};
+function resizeSea(){
+  const r=sea.parentElement.getBoundingClientRect();const dpr=Math.min(2,devicePixelRatio||1);
+  SW=r.width;SH=r.height;sea.width=SW*dpr;sea.height=SH*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  waterY=SH*.3;floorY=SH*.9;
+  scene.coral=Array.from({length:18},(_,i)=>({x:(i+.5)/18*SW+((i*37)%11-5),h:18+((i*53)%17),hue:[345,20,285,170,50][i%5],w:14+(i*7)%12}));
+  scene.kelp=Array.from({length:9},(_,i)=>({x:(i+.3)/9*SW+((i*29)%13),h:60+(i*41)%50,ph:i*1.3}));
+  layoutBoats();
+}
+function layoutBoats(){
+  const ag=G?G.agents:CREW;
+  scene.boats=ag.map((a,i)=>({id:a.id,x:(i+.5)/ag.length*SW,net:0,netT:0,col:a.color,emoji:a.emoji,short:a.short,decl:0,act:0}));
+}
+function spawnFish(kind){
+  const adult=kind==='A';
+  return {x:rnd(0,SW),y:rnd(waterY+45,floorY-35),vx:rnd(14,34)*(Math.random()<.5?-1:1)*(adult?1:1.3),ph:rnd(0,6.28),sz:adult?rnd(10,15):rnd(5,7.5)};
+}
+function sceneCast(choices){
+  scene.boats.forEach(b=>{const c=choices[b.id];b.netT=c?25+ (c.catch/MAXC)*(floorY-waterY-95):0;b.act=c?c.catch:0;b.decl=c?c.declared:0;});
+}
+function sceneResolve(res){
+  scene.boats.forEach(b=>{
+    b.netT=0;const c=res.choices[b.id];
+    if(c&&c.catch>=0){const lie=c.catch>c.declared;
+      scene.pops.push({x:b.x,y:waterY-62,text:'+'+c.catch,col:'#ffc928',life:2.6,vy:-14});
+      if(lie&&document.body.classList.contains('reveal'))scene.pops.push({x:b.x,y:waterY-86,text:'claims '+c.declared,col:'#ff5a36',life:3.2,vy:-8,sm:true});
+    }});
+  const n=Math.min(22,Math.round(res.jk/1.5));
+  for(let i=0;i<n;i++)scene.dead.push({x:rnd(SW*.1,SW*.9),y:rnd(waterY+60,floorY-30),life:rnd(3,5),a:1});
+  if(res.dH>4)fx('REEF DAMAGED',true);
+}
+function fx(text,quiet){
+  const el=$('#fxText');el.textContent=text;el.classList.add('show');clearTimeout(fx.h);fx.h=setTimeout(()=>el.classList.remove('show'),quiet?1400:2200);
+  if(/RED|COLLAPSE|DAMAGED/.test(text)){scene.tint=.28;scene.tintCol='#ff2a1a';}
+  else if(/BLOOM/.test(text)){scene.tint=.22;scene.tintCol='#39d98a';}
+}
+let lastTs=0;
+function frame(ts){
+  const t=ts/1000,dt=Math.min(.05,t-lastTs||.016);lastTs=t;
+  if(SW>0)drawScene(t,dt);
+  requestAnimationFrame(frame);
+}
+function drawScene(t,dt){
+  const g=G||{A:START.A,J:START.J,H:START.H,agents:CREW.map(c=>({...c,sitOut:false})),thinking:[]};
+  const c=ctx;c.clearRect(0,0,SW,SH);
+  // sky
+  let sk=c.createLinearGradient(0,0,0,waterY);sk.addColorStop(0,'#7fdcff');sk.addColorStop(1,'#d7f6ff');c.fillStyle=sk;c.fillRect(0,0,SW,waterY+4);
+  c.fillStyle='#ffe066';c.strokeStyle='#0b2545';c.lineWidth=3;c.beginPath();c.arc(SW*.9,waterY*.42,24,0,7);c.fill();c.stroke();
+  c.fillStyle='rgba(255,255,255,.95)';
+  for(let i=0;i<3;i++){const cx=((t*8+i*SW/2.4)%(SW+160))-80,cy=waterY*(.25+i*.18);c.beginPath();c.ellipse(cx,cy,34,11,0,0,7);c.ellipse(cx+22,cy+3,26,9,0,0,7);c.ellipse(cx-20,cy+4,22,8,0,0,7);c.fill();}
+  // water
+  let wg=c.createLinearGradient(0,waterY,0,floorY);wg.addColorStop(0,'#35d0dd');wg.addColorStop(.5,'#118fb4');wg.addColorStop(1,'#0a4a73');
+  c.fillStyle=wg;c.beginPath();c.moveTo(0,waterY);
+  for(let x=0;x<=SW;x+=12)c.lineTo(x,waterY+Math.sin(x*.03+t*1.6)*3+Math.sin(x*.07+t)*1.5);
+  c.lineTo(SW,SH);c.lineTo(0,SH);c.closePath();c.fill();
+  // rays
+  c.fillStyle='rgba(255,255,255,.07)';
+  for(let i=0;i<5;i++){const x=(i+.4)/5*SW+Math.sin(t*.4+i)*20;c.beginPath();c.moveTo(x,waterY);c.lineTo(x+50,waterY);c.lineTo(x+120,floorY);c.lineTo(x+30,floorY);c.fill();}
+  // floor
+  c.fillStyle='#e9c98f';c.beginPath();c.moveTo(0,SH);c.lineTo(0,floorY);
+  for(let x=0;x<=SW;x+=20)c.lineTo(x,floorY+Math.sin(x*.02)*4);
+  c.lineTo(SW,SH);c.closePath();c.fill();c.strokeStyle='#0b2545';c.lineWidth=3;c.stroke();
+  // kelp
+  const hv=g.H/100;
+  c.lineWidth=5;c.lineCap='round';
+  scene.kelp.forEach(k=>{c.strokeStyle=hv>.4?'#1f9d63':'#7d8f62';c.beginPath();c.moveTo(k.x,floorY);const hh=k.h*(.4+.6*hv);for(let s=1;s<=6;s++)c.lineTo(k.x+Math.sin(t*1.2+k.ph+s*.5)*s*3,floorY-hh*s/6);c.stroke();});
+  // coral
+  scene.coral.forEach((k,i)=>{const hh=k.h*(.35+.65*hv);const sat=Math.round(20+70*hv);c.fillStyle=`hsl(${k.hue},${sat}%,${hv>.35?58:78}%)`;c.strokeStyle='#0b2545';c.lineWidth=2;
+    c.beginPath();c.moveTo(k.x-k.w/2,floorY+4);c.quadraticCurveTo(k.x-k.w/2,floorY-hh,k.x-k.w/4,floorY-hh);c.quadraticCurveTo(k.x,floorY-hh*1.25,k.x+k.w/4,floorY-hh);c.quadraticCurveTo(k.x+k.w/2,floorY-hh,k.x+k.w/2,floorY+4);c.closePath();c.fill();c.stroke();});
+  // fish population
+  const tA=Math.min(110,Math.round(g.A/1.5)),tJ=Math.min(90,Math.round(g.J/.9));
+  if(scene.adults.length<tA&&Math.random()<.6)scene.adults.push(spawnFish('A'));
+  if(scene.adults.length>tA&&Math.random()<.6)scene.adults.pop();
+  if(scene.juv.length<tJ&&Math.random()<.6)scene.juv.push(spawnFish('J'));
+  if(scene.juv.length>tJ&&Math.random()<.6)scene.juv.pop();
+  const moveFish=(f,adult)=>{f.x+=f.vx*dt;if(f.x>SW+20){f.x=-20;}if(f.x<-20){f.x=SW+20;}
+    if(Math.random()<.003)f.vx=-f.vx; f.y+=Math.sin(t*.8+f.ph)*.2; f.y=clamp(f.y,waterY+35,floorY-25);
+    c.save();c.translate(f.x,f.y);c.scale(f.vx>=0?1:-1,1);const wag=Math.sin(t*9+f.ph)*f.sz*.25;
+    c.fillStyle=adult?'#ffb020':'#d4f4ff';c.strokeStyle='#0b2545';c.lineWidth=adult?2:1.5;
+    c.beginPath();c.ellipse(0,0,f.sz,f.sz*.52,0,0,7);c.fill();c.stroke();
+    c.beginPath();c.moveTo(-f.sz*.8,0);c.lineTo(-f.sz*1.5,-f.sz*.5+wag);c.lineTo(-f.sz*1.5,f.sz*.5+wag);c.closePath();c.fill();c.stroke();
+    if(adult){c.fillStyle='#ff7a1a';c.fillRect(-f.sz*.1,-f.sz*.5,f.sz*.28,f.sz);}
+    c.fillStyle='#0b2545';c.beginPath();c.arc(f.sz*.5,-f.sz*.1,Math.max(1,f.sz*.12),0,7);c.fill();c.restore();};
+  scene.juv.forEach(f=>moveFish(f,false));scene.adults.forEach(f=>moveFish(f,true));
+  // dead bycatch
+  scene.dead=scene.dead.filter(d=>(d.life-=dt)>0);
+  scene.dead.forEach(d=>{d.y-=14*dt;c.save();c.globalAlpha=Math.min(1,d.life);c.translate(d.x,d.y);c.scale(1,-1);c.fillStyle='#cfd6da';c.strokeStyle='#0b2545';c.lineWidth=1.5;c.beginPath();c.ellipse(0,0,6,3.4,0,0,7);c.fill();c.stroke();c.beginPath();c.moveTo(-5,0);c.lineTo(-10,-3);c.lineTo(-10,3);c.fill();c.restore();});
+  // bubbles
+  if(Math.random()<.2)scene.bubbles.push({x:rnd(0,SW),y:floorY,r:rnd(1.5,4),v:rnd(18,40)});
+  scene.bubbles=scene.bubbles.filter(b=>b.y>waterY);
+  c.strokeStyle='rgba(255,255,255,.7)';c.lineWidth=1.5;scene.bubbles.forEach(b=>{b.y-=b.v*dt;c.beginPath();c.arc(b.x+Math.sin(b.y*.05)*3,b.y,b.r,0,7);c.stroke();});
+  // nets
+  scene.boats.forEach((b,i)=>{b.net+=(b.netT-b.net)*Math.min(1,dt*3);if(b.net>3){const y=waterY+10+b.net;
+    c.strokeStyle='#0b2545';c.lineWidth=2;c.beginPath();c.moveTo(b.x,waterY+8);c.lineTo(b.x,y);c.stroke();
+    c.fillStyle='rgba(255,255,255,.28)';c.strokeStyle='#0b2545';c.lineWidth=2;c.setLineDash([4,3]);c.beginPath();c.moveTo(b.x-22,y-14);c.quadraticCurveTo(b.x,y+26,b.x+22,y-14);c.closePath();c.fill();c.stroke();c.setLineDash([]);}});
+  // boats
+  scene.boats.forEach((b,i)=>{
+    const ag=g.agents[i]||{};const out=ag.sitOut;const bob=Math.sin(t*1.3+i*1.7)*3+(Math.sin(t*.7+i)*1.5);const x=b.x,y=waterY+bob;
+    c.save();c.translate(x,y);c.rotate(Math.sin(t*1.1+i)*.04);
+    c.fillStyle=out?'#9aa7b0':b.col;c.strokeStyle='#0b2545';c.lineWidth=3;
+    c.beginPath();c.moveTo(-32,-12);c.lineTo(32,-12);c.lineTo(23,8);c.lineTo(-23,8);c.closePath();c.fill();c.stroke();
+    c.fillStyle='#fff';c.fillRect(-9,-30,18,18);c.strokeRect(-9,-30,18,18);
+    c.beginPath();c.moveTo(0,-30);c.lineTo(0,-46);c.stroke();c.fillStyle=out?'#9aa7b0':'#ff5a36';c.beginPath();c.moveTo(0,-46);c.lineTo(13,-42);c.lineTo(0,-38);c.closePath();c.fill();c.stroke();
+    c.font='15px serif';c.textAlign='center';c.fillStyle='#000';c.fillText(b.emoji,0,-15);
+    c.restore();
+    c.font='800 11px Figtree';c.textAlign='center';c.lineWidth=4;c.strokeStyle='#fff';c.strokeText(b.short,x,waterY+bob+24);c.fillStyle='#0b2545';c.fillText(b.short,x,waterY+bob+24);
+    if(out){c.font='800 11px Figtree';c.fillStyle='#ff5a36';c.strokeText('SUSPENDED',x,waterY+bob+37);c.fillText('SUSPENDED',x,waterY+bob+37);}
+    if(g.thinking&&g.thinking.includes(b.id)){const bx=x+22,by=waterY-58+bob;c.fillStyle='#fff';c.strokeStyle='#0b2545';c.lineWidth=2.5;c.beginPath();c.roundRect?c.roundRect(bx-16,by-11,32,20,8):c.rect(bx-16,by-11,32,20);c.fill();c.stroke();c.fillStyle='#0b2545';for(let k=0;k<3;k++){c.beginPath();c.arc(bx-8+k*8,by-1+Math.sin(t*6+k)*2,2.2,0,7);c.fill();}}
+  });
+  // pops
+  scene.pops=scene.pops.filter(p=>(p.life-=dt)>0);
+  scene.pops.forEach(p=>{p.y+=p.vy*dt;c.globalAlpha=Math.min(1,p.life);c.font=`400 ${p.sm?13:22}px 'Bowlby One'`;c.textAlign='center';c.lineWidth=4;c.strokeStyle='#0b2545';c.strokeText(p.text,p.x,p.y);c.fillStyle=p.col;c.fillText(p.text,p.x,p.y);c.globalAlpha=1;});
+  // tint
+  if(scene.tint>0){c.fillStyle=scene.tintCol;c.globalAlpha=scene.tint;c.fillRect(0,0,SW,SH);c.globalAlpha=1;scene.tint=Math.max(0,scene.tint-dt*.12);}
+}
+
+/* ===================== CROSS-SESSION STATS ===================== */
+let memGames=null, storageOK=true;
+function loadGames(){
+  if(memGames)return memGames;
+  try{const raw=localStorage.getItem(STORE_KEY);memGames=raw?JSON.parse(raw):[];if(!Array.isArray(memGames))memGames=[];}
+  catch(e){memGames=[];storageOK=false;}
+  return memGames;
+}
+function persistGames(){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(memGames.slice(-2000)));storageOK=true;}
+  catch(e){storageOK=false;}
+  return storageOK;
+}
+function recordGame(){
+  const games=loadGames(); const st=G.stats, r=G.result;
+  const board=[...G.agents].sort((x,y)=>y.wealth-x.wealth);
+  const rec={
+    id:Date.now().toString(36)+Math.random().toString(36).slice(2,6), ts:new Date().toISOString(),
+    mode:G.modeStart, model:G.modeStart==='gemini'?CFG.model:null, ap:AP_VERSION,
+    seasons:CFG.rounds, played:G.round, poachers:CFG.poachers,
+    winner:CFG.poachers===0?'none':(r.survived?'stewards':'poachers'),
+    outcome:r.survived?'survived':r.collapsed?'collapsed':'hollowed',
+    adults:Math.round(G.A), juveniles:Math.round(G.J), reef:Math.round(G.H), minReef:Math.round(st.minReef),
+    caught:G.caught, inspections:G.inspections, tribInsp:st.tribInsp, spotCatches:st.spotCatches, falseAlarms:st.falseAlarms,
+    guiltyPoacher:st.guiltyPoacher, guiltyStewards:st.guiltyStewards, firstCatch:st.firstCatch,
+    votesOnPoacher:st.votesOnPoacher, votesOnSteward:st.votesOnSteward, votesNone:st.votesNone,
+    hidden:st.hidden, hiddenP:st.hiddenP, hiddenS:st.hiddenS, fallbacks:st.fallbacks,
+    richestRole:board[0].role,
+    crew:G.agents.map(a=>({id:a.id,role:a.role,wealth:Math.round(a.wealth),exposed:a.exposed,votesRecv:a.votesRecv,totDecl:a.totDecl,totAct:a.totAct})),
+    stock:G.series.map(s=>Math.round(s.A+s.J))
+  };
+  games.push(rec); const ok=persistGames(); updateStatCount();
+  return {ok,n:games.length};
+}
+function updateStatCount(){const el=$('#statCount');if(el)el.textContent=loadGames().length;}
+
+const avg=(a,f)=>{const v=a.map(f).filter(x=>x!==null&&x!==undefined&&Number.isFinite(x));return v.length?v.reduce((x,y)=>x+y,0)/v.length:null;};
+const pct1=(x)=>x===null?'–':Math.round(x*100)+'%';
+const fix=(x,d=1)=>x===null?'–':x.toFixed(d);
+function rate(k,n){if(!n)return '–';const p=k/n,m=1.96*Math.sqrt(p*(1-p)/n);return `${Math.round(p*100)}% <small>±${Math.round(m*100)}</small>`;}
+function summarize(games){
+  const groups={};
+  games.forEach(g=>{const k=`${g.mode}|${g.ap}|${g.poachers}`;(groups[k]=groups[k]||[]).push(g);});
+  return Object.entries(groups).map(([k,a])=>{
+    const [mode,ap,po]=k.split('|');const P=+po,n=a.length;
+    const sw=a.filter(g=>g.outcome==='survived').length;
+    const vp=a.reduce((s,g)=>s+g.votesOnPoacher,0),vs=a.reduce((s,g)=>s+g.votesOnSteward,0);
+    const ti=a.reduce((s,g)=>s+g.tribInsp,0),fa=a.reduce((s,g)=>s+g.falseAlarms,0);
+    const crew=a.flatMap(g=>g.crew);const sw_=crew.filter(c=>c.role==='steward'),pw_=crew.filter(c=>c.role==='poacher');
+    return {mode,ap,P,n,
+      stewardWin:rate(sw,n), poacherWin:P?rate(n-sw,n):'–',
+      collapses:a.filter(g=>g.outcome==='collapsed').length,
+      caught:avg(a,g=>g.caught), pCaught:P?avg(a,g=>g.guiltyPoacher):null, sCaught:avg(a,g=>g.guiltyStewards),
+      voteAcc:P&&(vp+vs)?vp/(vp+vs):null, falseRate:ti?fa/ti:null,
+      first:avg(a,g=>g.firstCatch), hidden:avg(a,g=>g.hidden), reef:avg(a,g=>g.reef), minReef:avg(a,g=>g.minReef),
+      wS:sw_.length?sw_.reduce((s,c)=>s+c.wealth,0)/sw_.length:null, wP:pw_.length?pw_.reduce((s,c)=>s+c.wealth,0)/pw_.length:null,
+      fb:avg(a,g=>g.fallbacks)};
+  }).sort((x,y)=>(x.mode+x.ap+x.P).localeCompare(y.mode+y.ap+y.P));
+}
+function openStats(){
+  const games=loadGames();
+  $('#statNote').textContent=storageOK?`${games.length} completed games saved in this browser. Games you abandon mid-run are not recorded.`:'Browser storage is blocked, so history only lasts until you close this page. Use Export JSON to keep it.';
+  if(!games.length){$('#statTable').innerHTML='<div class="empty">No finished games yet. Play one through to the end and it will appear here.</div>';}
+  else{
+    const rows=summarize(games).map(r=>`<tr><td>${r.mode==='gemini'?'Gemini':'Autopilot'} · ${r.ap} · ${r.P} poacher${r.P===1?'':'s'}</td><td>${r.n}</td><td>${r.stewardWin}</td><td>${r.poacherWin}</td><td>${r.collapses}</td><td>${fix(r.caught)}</td><td>${r.P?fix(r.pCaught):'–'}</td><td>${fix(r.sCaught)}</td><td>${pct1(r.voteAcc)}</td><td>${pct1(r.falseRate)}</td><td>${fix(r.first)}</td><td>${fix(r.hidden)}t</td><td>${fix(r.reef,0)}% / ${fix(r.minReef,0)}%</td><td>${r.wS===null?'–':money(r.wS)} / ${r.wP===null?'–':money(r.wP)}</td>${''}</tr>`).join('');
+    $('#statTable').innerHTML=`<table><thead><tr><th>Setup</th><th>Games</th><th>Stewards win</th><th>Poachers win</th><th>Collapses</th><th>Liars caught / game</th><th>…poachers</th><th>…stewards</th><th>Votes on poachers</th><th>False-alarm rate</th><th>First catch (season)</th><th>Hidden tons / game</th><th>Reef end / lowest</th><th>Avg wealth steward / poacher</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  $('#dlgStats').showModal();
+}
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},600);}
+function exportCsv(){
+  const g=loadGames();const cols=['id','ts','mode','model','ap','seasons','played','poachers','winner','outcome','adults','juveniles','reef','minReef','caught','inspections','tribInsp','spotCatches','falseAlarms','guiltyPoacher','guiltyStewards','firstCatch','votesOnPoacher','votesOnSteward','votesNone','hidden','hiddenP','hiddenS','fallbacks','richestRole'];
+  const q=v=>{v=v===null||v===undefined?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const lines=[cols.join(','),...g.map(r=>cols.map(c=>q(r[c])).join(','))];
+  download('shared-waters-games.csv',lines.join('\n'),'text/csv');
+}
+function importGames(file){
+  const fr=new FileReader();
+  fr.onload=()=>{try{
+    let d=JSON.parse(fr.result);if(d&&d.games)d=d.games;if(!Array.isArray(d))throw new Error('not a game list');
+    const have=new Set(loadGames().map(x=>x.id));let added=0;
+    d.forEach(x=>{if(x&&x.id&&x.mode&&!have.has(x.id)){memGames.push(x);have.add(x.id);added++;}});
+    persistGames();updateStatCount();openStatsRefresh();toast(`Imported ${added} new game${added===1?'':'s'}.`);
+  }catch(e){toast('Import failed: '+e.message);}};
+  fr.readAsText(file);
+}
+function openStatsRefresh(){if($('#dlgStats').open){$('#dlgStats').close();}openStats();}
+
+/* ===================== SETUP & WIRING ===================== */
+function openSetup(){runToken++;paused=false;$('#btnPause').textContent='Pause';try{const k=sessionStorage.getItem('sw_key');if(k&&!$('#inKey').value)$('#inKey').value=k;}catch(e){}$('#dlgSetup').showModal();}
+function launch(){
+  CFG.mode=document.querySelector('input[name=mode]:checked').value;
+  CFG.key=$('#inKey').value.trim();CFG.model=$('#inModel').value.trim()||'gemini-2.5-flash';
+  CFG.rpm=clamp(parseInt($('#inRpm').value,10)||10,2,300);
+  CFG.rounds=clamp(parseInt($('#inRounds').value,10)||12,6,50);
+  {const pv=parseInt($('#inPoach').value,10);CFG.poachers=Number.isFinite(pv)?clamp(pv,0,3):2;}
+  if(CFG.mode==='gemini'&&!CFG.key){toast('Paste a Gemini API key, or choose the autopilot demo.');return;}
+  try{if(CFG.key)sessionStorage.setItem('sw_key',CFG.key);}catch(e){}
+  $('#dlgSetup').close();
+  $('#callBadge').hidden=CFG.mode!=='gemini';
+  nextSlot=0;rpmEff=null;newGame();G.modeStart=CFG.mode;
+  $('#feed').innerHTML='';$('#thoughts').innerHTML='';$('#callCount').textContent='0';
+  thFilter='all';buildFilters();layoutBoats();prevStat={A:G.A,J:G.J,price:0};
+  $('#bSeason').textContent='Season 0';setPhase('Casting off');
+  addChat({type:'sys',text:CFG.poachers===0?`Test mode: there are no poachers. The fishery must simply survive ${CFG.rounds} seasons.`:`${CFG.poachers} of the 6 captains are secret poachers. Stewards win if the fishery survives ${CFG.rounds} seasons.`});
+  renderRoster();updateStats();
+  const tok=++runToken;paused=false;$('#btnPause').textContent='Pause';
+  runGame(tok);
+}
+function init(){
+  buildFilters();resizeSea();
+  new ResizeObserver(()=>{resizeSea();drawCharts();}).observe(sea.parentElement);
+  requestAnimationFrame(frame);
+  $$('input[name=mode]').forEach(r=>r.addEventListener('change',()=>{$('#gemOnly').style.display=document.querySelector('input[name=mode]:checked').value==='gemini'?'block':'none';}));
+  $('#btnLaunch').onclick=launch;
+  $('#btnNew').onclick=openSetup;
+  $('#btnStats').onclick=openStats;
+  $('#btnStatsClose').onclick=()=>$('#dlgStats').close();
+  $('#btnExpJson').onclick=()=>download('shared-waters-games.json',JSON.stringify({version:1,games:loadGames()},null,1),'application/json');
+  $('#btnExpCsv').onclick=exportCsv;
+  $('#btnImport').onclick=()=>$('#fileImport').click();
+  $('#fileImport').onchange=e=>{if(e.target.files[0])importGames(e.target.files[0]);e.target.value='';};
+  $('#btnClear').onclick=()=>{if(confirm('Delete all saved game history? Export it first if you want a backup.')){memGames=[];persistGames();updateStatCount();openStatsRefresh();}};
+  updateStatCount();
+  $('#btnPause').onclick=()=>{paused=!paused;$('#btnPause').textContent=paused?'Resume':'Pause';};
+  $('#selSpeed').onchange=e=>{CFG.speed=parseFloat(e.target.value);};
+  $('#chkReveal').onchange=e=>{document.body.classList.toggle('reveal',e.target.checked);drawCharts();};
+  $('#dlgSetup').addEventListener('cancel',e=>{if(!G)e.preventDefault();});
+  newGame();layoutBoats();renderRoster();updateStats();
+  openSetup();
+}
+if(typeof window!=='undefined'&&!window.__TEST__)init();
+</script>
+</body>
+</html>
