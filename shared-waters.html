@@ -466,21 +466,36 @@ function parseJSON(t){t=String(t).replace(/```json|```/g,'').trim();try{return J
 
 async function ollamaCall(a,kind){
   const {sys,usr}=buildPrompt(a,kind);
-  const url=`${String(CFG.baseUrl||'http://127.0.0.1:11434').replace(/\/+$/,'')}/api/chat`;
-  const body={
-    model:CFG.model,
-    stream:false,
-    format:'json',
-    options:{temperature:1},
-    messages:[
-      {role:'system',content:sys},
-      {role:'user',content:usr}
-    ]
-  };
+  const base=String(CFG.baseUrl||'http://127.0.0.1:11434').replace(/\/+$/,'');
+  let path='/api/chat';
   for(let attempt=0;attempt<6;attempt++){
+    const url=`${base}${path}`;
+    const body=path==='/api/chat'
+      ?{
+        model:CFG.model,
+        stream:false,
+        format:'json',
+        options:{temperature:1},
+        messages:[
+          {role:'system',content:sys},
+          {role:'user',content:usr}
+        ]
+      }
+      :{
+        model:CFG.model,
+        stream:false,
+        format:'json',
+        options:{temperature:1},
+        system:sys,
+        prompt:usr
+      };
     await rateSlot();                       // every attempt, including retries, takes a slot
     G.calls++; $('#callCount').textContent=G.calls;
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(res.status===404&&path==='/api/chat'){
+      path='/api/generate';
+      continue;
+    }
     if(res.status===429||res.status>=500){
       if(res.status===429){
         const txt=await res.text().catch(()=>'');
@@ -497,7 +512,7 @@ async function ollamaCall(a,kind){
     }
     if(!res.ok){const t=await res.text();throw new Error((res.status<500?'FATAL ':'')+res.status+': '+t.slice(0,180));}
     const data=await res.json();
-    const txt=String(data?.message?.content||'');
+    const txt=String(path==='/api/chat'?data?.message?.content:data?.response||'');
     if(!txt)throw new Error('empty response');
     return parseJSON(txt);
   }
